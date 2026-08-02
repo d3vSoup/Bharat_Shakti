@@ -1,34 +1,33 @@
 /**
  * isl-dict.js — Bharat Shakti ISL Gesture Dictionary
  *
- * Real ISL images sourced from:
- *   - satyam9090/Automatic-Indian-Sign-Language-Translator (downloaded locally)
- *     • letters/a–z.jpg  → 1440×1080 real ISL hand photos
- *     • words/*.gif      → animated ISL gesture GIFs
+ * Image sources (priority order):
+ *  1. Animated GIFs  — satyam9090/Automatic-Indian-Sign-Language-Translator
+ *     words/*.gif → animated ISL phrase GIFs
+ *  2. Vivit still frames — Kaggle kaushikyh/indian-sign-language-words-with-landmarks
+ *     words_vivit/*.jpg → landmark-overlaid ISL word frames (224×224, from MOV)
+ *  3. SVG hand renderer (isl-hands.js) — zero-network fallback
  *
- * Falls back to SVG hand renderer (isl-hands.js) for words without a GIF.
+ * Fingerspelling: letters/*.jpg — real ISL hand photos (satyam9090, 1440×1080)
  */
 
 import { getISLSvgUrl } from './isl-hands.js';
 
-const LETTERS_PATH = '/isl_gestures/letters/';
-const WORDS_PATH   = '/isl_gestures/words/';
+const LETTERS_PATH     = '/isl_gestures/letters/';
+const WORDS_PATH       = '/isl_gestures/words/';
+const WORDS_VIVIT_PATH = '/isl_gestures/words_vivit/';
 
-// ── Alphabet fingerspelling — real photos ─────────────────────────────────
-// Maps each letter to its local JPG path
+// ── Alphabet fingerspelling — real photos ──────────────────────────────────
 export const LETTER_PATHS = {};
 'abcdefghijklmnopqrstuvwxyz'.split('').forEach(ch => {
   LETTER_PATHS[ch.toUpperCase()] = `${LETTERS_PATH}${ch}.jpg`;
 });
 
-// ── Word GIFs available locally (downloaded from satyam9090 repo) ─────────
-// Keyed by the single ISL gloss word they best represent
+// ── Word GIFs (animated, phrase-level) ────────────────────────────────────
 export const WORD_GIFS = {
   'HELLO':      'hello.gif',
   'HI':         'hello.gif',
-  'GOOD':       'good morning.gif',
   'MORNING':    'good morning.gif',
-  'AFTERNOON':  'good afternoon.gif',
   'QUESTION':   'good question.gif',
   'SIT':        'sit down.gif',
   'STAND':      'stand up.gif',
@@ -51,7 +50,88 @@ export const WORD_GIFS = {
   'WHATSUP':    'whats up.gif',
 };
 
-// ── All known gloss words (SVG fallback for non-GIF words) ────────────────
+// ── Vivit word still images (76 words, landmark-overlaid, 224×224) ─────────
+// Extracted from ProcessedData_vivit .MOV files (Kaggle kaushikyh dataset)
+export const WORD_STILLS = {
+  'AFTERNOON':  'afternoon.jpg',
+  'ANIMAL':     'animal.jpg',
+  'BAD':        'bad.jpg',
+  'BEAUTIFUL':  'beautiful.jpg',
+  'BIG':        'big.jpg',
+  'BIRD':       'bird.jpg',
+  'BLIND':      'blind.jpg',
+  'CAT':        'cat.jpg',
+  'CHEAP':      'cheap.jpg',
+  'CLOTHING':   'clothing.jpg',
+  'COLD':       'cold.jpg',
+  'COW':        'cow.jpg',
+  'CURVED':     'curved.jpg',
+  'DEAF':       'deaf.jpg',
+  'DOG':        'dog.jpg',
+  'DRESS':      'dress.jpg',
+  'DRY':        'dry.jpg',
+  'EVENING':    'evening.jpg',
+  'EXPENSIVE':  'expensive.jpg',
+  'FAMOUS':     'famous.jpg',
+  'FAST':       'fast.jpg',
+  'FEMALE':     'female.jpg',
+  'FISH':       'fish.jpg',
+  'FLAT':       'flat.jpg',
+  'FRIDAY':     'friday.jpg',
+  'GOOD':       'good.jpg',
+  'HAPPY':      'happy.jpg',
+  'HAT':        'hat.jpg',
+  'HEALTHY':    'healthy.jpg',
+  'HORSE':      'horse.jpg',
+  'HOT':        'hot.jpg',
+  'HOUR':       'hour.jpg',
+  'LIGHT':      'light.jpg',
+  'LONG':       'long.jpg',
+  'LOOSE':      'loose.jpg',
+  'LOUD':       'loud.jpg',
+  'MINUTE':     'minute.jpg',
+  'MONDAY':     'monday.jpg',
+  'MONTH':      'month.jpg',
+  'MORNING':    'morning.jpg',
+  'MOUSE':      'mouse.jpg',
+  'NARROW':     'narrow.jpg',
+  'NEW':        'new.jpg',
+  'NIGHT':      'night.jpg',
+  'OLD':        'old.jpg',
+  'PANT':       'pant.jpg',
+  'POCKET':     'pocket.jpg',
+  'QUIET':      'quiet.jpg',
+  'SAD':        'sad.jpg',
+  'SATURDAY':   'saturday.jpg',
+  'SECOND':     'second.jpg',
+  'SHIRT':      'shirt.jpg',
+  'SHOES':      'shoes.jpg',
+  'SHORT':      'short.jpg',
+  'SICK':       'sick.jpg',
+  'SKIRT':      'skirt.jpg',
+  'SLOW':       'slow.jpg',
+  'SMALL':      'small.jpg',
+  'SUIT':       'suit.jpg',
+  'SUNDAY':     'sunday.jpg',
+  'T_SHIRT':    't_shirt.jpg',
+  'TALL':       'tall.jpg',
+  'THURSDAY':   'thursday.jpg',
+  'TIME':       'time.jpg',
+  'TODAY':      'today.jpg',
+  'TOMORROW':   'tomorrow.jpg',
+  'TUESDAY':    'tuesday.jpg',
+  'UGLY':       'ugly.jpg',
+  'WARM':       'warm.jpg',
+  'WEDNESDAY':  'wednesday.jpg',
+  'WEEK':       'week.jpg',
+  'WET':        'wet.jpg',
+  'WIDE':       'wide.jpg',
+  'YEAR':       'year.jpg',
+  'YESTERDAY':  'yesterday.jpg',
+  'YOUNG':      'young.jpg',
+};
+
+// ── All known gloss words (SVG fallback for remaining words) ───────────────
 export const KNOWN_WORDS = new Set([
   // Greetings
   'hello','bye','goodbye','good','morning','afternoon','evening','night',
@@ -68,7 +148,7 @@ export const KNOWN_WORDS = new Set([
   'book','books','pen','pencil','paper','class','school','college',
   'exam','test','homework','board','table','chair','bag','computer',
   'phone','water','food',
-  // Numbers (text)
+  // Numbers
   'one','two','three','four','five',
   // Adjectives & concepts
   'big','small','new','old','fast','slow','open','close','home','name',
@@ -123,20 +203,27 @@ export const HINDI_TO_ENGLISH = {
 
 /**
  * Look up a word. Priority:
- *  1. Real animated GIF from ISL_Gifs (type: 'gif')
- *  2. SVG hand illustration (type: 'word')
- *  Returns null if unknown → caller will fingerspell.
+ *  1. Animated GIF (phrase-level, most expressive)
+ *  2. Vivit still image (landmark-overlaid real ISL frame)
+ *  3. SVG hand renderer (fallback for remaining known words)
+ *  Returns null → caller will fingerspell letter by letter.
  */
 export function lookupWord(word) {
   const key = word.toUpperCase();
 
-  // 1. Check for a real GIF
+  // 1. Animated GIF
   const gifFile = WORD_GIFS[key];
   if (gifFile) {
     return { url: `${WORDS_PATH}${gifFile}`, type: 'gif', label: key };
   }
 
-  // 2. SVG fallback for known gloss words
+  // 2. Vivit real landmark image
+  const stillFile = WORD_STILLS[key];
+  if (stillFile) {
+    return { url: `${WORDS_VIVIT_PATH}${stillFile}`, type: 'still', label: key };
+  }
+
+  // 3. SVG hand illustration fallback
   if (KNOWN_WORDS.has(key.toLowerCase())) {
     return { url: getISLSvgUrl(key, 'word'), type: 'word', label: key };
   }
@@ -145,14 +232,12 @@ export function lookupWord(word) {
 }
 
 /**
- * Get fingerspelling sequence using real hand photos.
+ * Fingerspelling — uses real ISL hand photos (1440×1080 JPGs).
  */
 export function fingerspell(word) {
   return word.toUpperCase().split('').map(ch => {
     if (!/[A-Z]/.test(ch)) return null;
     const path = LETTER_PATHS[ch];
-    return path
-      ? { url: path, type: 'letter', label: ch }
-      : null;
+    return path ? { url: path, type: 'letter', label: ch } : null;
   }).filter(Boolean);
 }

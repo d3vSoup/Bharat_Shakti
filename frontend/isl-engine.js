@@ -307,6 +307,7 @@ export function animateGestures(gestures, imgEl, labelEl, pillContainer, duratio
         labelEl.textContent = g.word;
         labelEl.style.fontSize = '1.1rem';
       } else {
+        // 'word' (SVG) or 'still' (vivit real image) — same display
         labelEl.textContent = g.word;
         labelEl.style.fontSize = '';
       }
@@ -346,16 +347,17 @@ export function animateGestures(gestures, imgEl, labelEl, pillContainer, duratio
     idx++;
 
     // Speed per type:
-    //  gif    → long hold (gif plays its own animation, need time to watch)
-    //  word   → standard (SVG hand illustration)
+    //  gif    → long hold (gif plays its own animation)
     //  letter → fast flash (real hand photo per letter)
+    //  still  → standard (vivit landmark image — same as word SVG)
+    //  word   → standard (SVG hand illustration)
     let delay;
     if (g.type === 'gif') {
-      delay = Math.max(durationMs * 1.8, 2000);  // GIFs need time to play
+      delay = Math.max(durationMs * 1.8, 2000);
     } else if (g.type === 'letter') {
-      delay = Math.max(durationMs * 0.5, 600);   // Quick letter flashes
+      delay = Math.max(durationMs * 0.5, 600);
     } else {
-      delay = durationMs;                          // Standard word SVG
+      delay = durationMs; // 'word' or 'still'
     }
     timer = setTimeout(showNext, delay);
   }
