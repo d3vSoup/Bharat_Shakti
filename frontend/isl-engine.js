@@ -174,6 +174,23 @@ export function processToISL(rawText, lang = 'en') {
   return { gloss, gestures };
 }
 
+// ── Inline SVG fallback (no network) ──────────────────────────────────────
+/**
+ * Generate a simple SVG data URL with a text label.
+ * Used as onerror fallback so we never need external placeholder services.
+ */
+function makeFallbackSvg(label, bg = '#FFB800', fg = '#271900') {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="280" height="200" viewBox="0 0 280 200">
+    <rect width="280" height="200" fill="${bg}" rx="8"/>
+    <text x="140" y="110" text-anchor="middle" dominant-baseline="middle"
+          font-family="sans-serif" font-size="${label.length > 6 ? 28 : 38}"
+          font-weight="800" fill="${fg}">${label}</text>
+    <text x="140" y="170" text-anchor="middle"
+          font-family="sans-serif" font-size="11" fill="${fg}" opacity="0.6">ISL Sign</text>
+  </svg>`;
+  return `data:image/svg+xml;base64,${btoa(svg)}`;
+}
+
 // ── Gesture Renderer ───────────────────────────────────────────────────────
 /**
  * Animate a gesture sequence in the given container.
@@ -257,15 +274,16 @@ export function animateGestures(gestures, imgEl, labelEl, pillContainer, duratio
         imgEl.classList.add('gesture-visible');
       };
       imgEl.onerror = () => {
-        // Image failed to load — show letter fallback
-        imgEl.src = `https://via.placeholder.com/280x200/FFB800/271900?text=${encodeURIComponent(g.label)}`;
+        // Image failed — show local text fallback SVG (no network needed)
+        imgEl.src = makeFallbackSvg(g.label || '?', '#FFB800', '#271900');
         imgEl.classList.remove('gesture-fade-out');
         imgEl.classList.add('gesture-visible');
+        imgEl.onerror = null;
       };
       imgEl.src = g.url;
     } else {
       // No URL (space/punctuation): show placeholder
-      imgEl.src = `https://via.placeholder.com/280x200/f1eee7/837560?text=${encodeURIComponent(g.label || '?')}`;
+      imgEl.src = makeFallbackSvg(g.label || '?', '#f1eee7', '#837560');
       imgEl.classList.remove('gesture-fade-out');
       imgEl.classList.add('gesture-visible');
     }
