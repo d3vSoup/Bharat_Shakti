@@ -135,6 +135,35 @@ export function toISLGloss(text) {
   return ordered.map(t => t.word.toUpperCase());
 }
 
+// ── Multi-word GIF mapping (phrase → GIF key) ─────────────────────────────
+// Allows full phrases spoken by teacher to match GIF files directly
+const PHRASE_TO_GIF_KEY = {
+  'sit down':      'SIT',
+  'stand up':      'STAND',
+  'good morning':  'MORNING',
+  'good afternoon':'AFTERNOON',
+  'good question': 'QUESTION',
+  'i am fine':     'FINE',
+  'i am sorry':    'SORRY',
+  'i am thinking': 'THINK',
+  'i am tired':    'TIRED',
+  'shall i help you': 'HELP',
+  'nice to meet you': 'MEET',
+  'dont worry':    'WORRY',
+  'do not worry':  'WORRY',
+  'what is your name': 'NAME',
+  'what is the problem': 'PROBLEM',
+  'open the door': 'OPEN',
+  'you are wrong': 'WRONG',
+  'sign language': 'SIGN',
+  'did you finish homework': 'HOMEWORK',
+  'lets go for lunch': 'LUNCH',
+  'be careful':    'CAREFUL',
+  'take care':     'CARE',
+  "what's up":     'WHATSUP',
+  'whats up':      'WHATSUP',
+};
+
 // ── Full pipeline ──────────────────────────────────────────────────────────
 /**
  * Master pipeline: raw speech text → ISL gesture sequence.
@@ -142,7 +171,7 @@ export function toISLGloss(text) {
  * @param {string} rawText — from mic / paste / clipboard
  * @param {'en'|'hi'} lang — language hint
  * @returns {{ gloss: string[], gestures: GestureEntry[] }}
- *   GestureEntry: { word: string, url: string, type: 'word'|'letter'|'space', label: string }
+ *   GestureEntry: { word: string, url: string, type: 'word'|'letter'|'gif'|'space', label: string }
  */
 export function processToISL(rawText, lang = 'en') {
   let text = rawText.trim();
@@ -151,14 +180,26 @@ export function processToISL(rawText, lang = 'en') {
   // 1. Hindi transliteration if needed
   if (lang === 'hi' || isHindi(text)) {
     text = transliterateHindi(text);
-    // Strip any remaining bracket-marked unmapped tokens gracefully
     text = text.replace(/\[[^\]]*\]/g, '');
   }
 
-  // 2. Get ISL gloss (SOV reorder)
+  // 2. Check for whole-phrase GIF match first (before NLP splitting)
+  const lc = text.toLowerCase().replace(/[^a-z\s']/g, '').trim();
+  const phraseKey = PHRASE_TO_GIF_KEY[lc];
+  if (phraseKey) {
+    const entry = lookupWord(phraseKey);
+    if (entry) {
+      return {
+        gloss: [phraseKey],
+        gestures: [{ word: phraseKey, ...entry }]
+      };
+    }
+  }
+
+  // 3. Get ISL gloss (SOV reorder)
   const gloss = toISLGloss(text);
 
-  // 3. Build gesture sequence: word lookup → fingerspell fallback
+  // 4. Build gesture sequence: word lookup → fingerspell fallback
   const gestures = [];
   for (const glossWord of gloss) {
     const entry = lookupWord(glossWord);
@@ -260,9 +301,15 @@ export function animateGestures(gestures, imgEl, labelEl, pillContainer, duratio
 
     // Update label
     if (labelEl) {
-      labelEl.textContent = g.type === 'letter'
-        ? `${g.word} (fingerspelling: ${g.label})`
-        : g.word;
+      if (g.type === 'letter') {
+        labelEl.textContent = `${g.word} — spelling: ${g.label}`;
+      } else if (g.type === 'gif') {
+        labelEl.textContent = g.word;
+        labelEl.style.fontSize = '1.1rem';
+      } else {
+        labelEl.textContent = g.word;
+        labelEl.style.fontSize = '';
+      }
     }
 
     // Load image
@@ -298,8 +345,18 @@ export function animateGestures(gestures, imgEl, labelEl, pillContainer, duratio
 
     idx++;
 
-    // Speed: letters show faster than whole-word signs
-    const delay = g.type === 'letter' ? Math.max(durationMs * 0.55, 500) : durationMs;
+    // Speed per type:
+    //  gif    → long hold (gif plays its own animation, need time to watch)
+    //  word   → standard (SVG hand illustration)
+    //  letter → fast flash (real hand photo per letter)
+    let delay;
+    if (g.type === 'gif') {
+      delay = Math.max(durationMs * 1.8, 2000);  // GIFs need time to play
+    } else if (g.type === 'letter') {
+      delay = Math.max(durationMs * 0.5, 600);   // Quick letter flashes
+    } else {
+      delay = durationMs;                          // Standard word SVG
+    }
     timer = setTimeout(showNext, delay);
   }
 

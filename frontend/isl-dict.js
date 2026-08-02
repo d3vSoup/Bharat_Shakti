@@ -1,18 +1,57 @@
 /**
  * isl-dict.js — Bharat Shakti ISL Gesture Dictionary
  *
- * Gesture images are generated client-side via isl-hands.js (SVG renderer)
- * — zero network dependency, instant, works offline.
+ * Real ISL images sourced from:
+ *   - satyam9090/Automatic-Indian-Sign-Language-Translator (downloaded locally)
+ *     • letters/a–z.jpg  → 1440×1080 real ISL hand photos
+ *     • words/*.gif      → animated ISL gesture GIFs
  *
- * Word list vocabulary derived from:
- *  - satyam9090/Automatic-Indian-Sign-Language-Translator
- *  - AI4Bharat/INCLUDE (ISL grammar reference)
+ * Falls back to SVG hand renderer (isl-hands.js) for words without a GIF.
  */
 
 import { getISLSvgUrl } from './isl-hands.js';
 
-// ── Known vocabulary (150+ classroom words) ─────────────────────────────
-// SVG hand pose for each word defined in isl-hands.js
+const LETTERS_PATH = '/isl_gestures/letters/';
+const WORDS_PATH   = '/isl_gestures/words/';
+
+// ── Alphabet fingerspelling — real photos ─────────────────────────────────
+// Maps each letter to its local JPG path
+export const LETTER_PATHS = {};
+'abcdefghijklmnopqrstuvwxyz'.split('').forEach(ch => {
+  LETTER_PATHS[ch.toUpperCase()] = `${LETTERS_PATH}${ch}.jpg`;
+});
+
+// ── Word GIFs available locally (downloaded from satyam9090 repo) ─────────
+// Keyed by the single ISL gloss word they best represent
+export const WORD_GIFS = {
+  'HELLO':      'hello.gif',
+  'HI':         'hello.gif',
+  'GOOD':       'good morning.gif',
+  'MORNING':    'good morning.gif',
+  'AFTERNOON':  'good afternoon.gif',
+  'QUESTION':   'good question.gif',
+  'SIT':        'sit down.gif',
+  'STAND':      'stand up.gif',
+  'FINE':       'i am fine.gif',
+  'SORRY':      'i am sorry.gif',
+  'THINK':      'i am thinking.gif',
+  'TIRED':      'i am tired.gif',
+  'HELP':       'shall I help you.gif',
+  'MEET':       'nice to meet you.gif',
+  'WORRY':      'dont worry.gif',
+  'NAME':       'what is your name.gif',
+  'PROBLEM':    'what is the problem.gif',
+  'OPEN':       'open the door.gif',
+  'WRONG':      'you are wrong.gif',
+  'SIGN':       'sign language interpreter.gif',
+  'HOMEWORK':   'did you finish homework.gif',
+  'LUNCH':      'lets go for lunch.gif',
+  'CAREFUL':    'be careful.gif',
+  'CARE':       'take care.gif',
+  'WHATSUP':    'whats up.gif',
+};
+
+// ── All known gloss words (SVG fallback for non-GIF words) ────────────────
 export const KNOWN_WORDS = new Set([
   // Greetings
   'hello','bye','goodbye','good','morning','afternoon','evening','night',
@@ -83,35 +122,37 @@ export const HINDI_TO_ENGLISH = {
 };
 
 /**
- * Look up a word in the ISL dictionary.
- * Returns a gesture entry with SVG data URL, or null (caller should fingerspell).
- * @param {string} word — gloss word (any case)
- * @returns {{ url: string, type: string, label: string } | null}
+ * Look up a word. Priority:
+ *  1. Real animated GIF from ISL_Gifs (type: 'gif')
+ *  2. SVG hand illustration (type: 'word')
+ *  Returns null if unknown → caller will fingerspell.
  */
 export function lookupWord(word) {
   const key = word.toUpperCase();
-  if (KNOWN_WORDS.has(key.toLowerCase())) {
-    return {
-      url:   getISLSvgUrl(key, 'word'),
-      type:  'word',
-      label: key
-    };
+
+  // 1. Check for a real GIF
+  const gifFile = WORD_GIFS[key];
+  if (gifFile) {
+    return { url: `${WORDS_PATH}${gifFile}`, type: 'gif', label: key };
   }
+
+  // 2. SVG fallback for known gloss words
+  if (KNOWN_WORDS.has(key.toLowerCase())) {
+    return { url: getISLSvgUrl(key, 'word'), type: 'word', label: key };
+  }
+
   return null;
 }
 
 /**
- * Get fingerspelling sequence for a word.
- * @param {string} word
- * @returns {Array<{ url: string, type: string, label: string }>}
+ * Get fingerspelling sequence using real hand photos.
  */
 export function fingerspell(word) {
   return word.toUpperCase().split('').map(ch => {
-    if (ch === ' ' || !/[A-Z]/.test(ch)) return null;
-    return {
-      url:   getISLSvgUrl(ch, 'letter'),
-      type:  'letter',
-      label: ch
-    };
+    if (!/[A-Z]/.test(ch)) return null;
+    const path = LETTER_PATHS[ch];
+    return path
+      ? { url: path, type: 'letter', label: ch }
+      : null;
   }).filter(Boolean);
 }

@@ -84,12 +84,15 @@
   /* ── ISL Gesture Image ── */
   #gestureImg {
     width: 100%;
-    max-width: 320px;
-    height: 220px;
+    max-width: 400px;
+    height: 300px;
     object-fit: contain;
-    border-radius: 4px;
+    border-radius: 8px;
     opacity: 0;
-    transition: opacity 0.25s ease;
+    transition: opacity 0.22s ease;
+    background: transparent;
+    display: block;
+    margin: 0 auto;
   }
   #gestureImg.gesture-visible { opacity: 1; }
   #gestureImg.gesture-fade-out { opacity: 0; }
@@ -430,11 +433,11 @@
 
           <!-- Active gesture display -->
           <div id="islActive" class="hidden flex-col items-center gap-3 relative z-10 w-full">
-            <!-- Gesture image -->
-            <div class="relative">
+        <!-- Gesture image -->
+            <div class="relative flex items-center justify-center">
               <img id="gestureImg" src="" alt="ISL gesture" class="gesture-visible"/>
-              <!-- Fingerspelling overlay indicator -->
-              <div id="fspIndicator" class="hidden absolute top-1 right-1 bg-tertiary-container border border-on-surface px-2 py-0.5 rounded-full text-xs font-bold text-on-tertiary-container">
+              <!-- Fingerspell overlay indicator — top-right of image -->
+              <div id="fspIndicator" class="hidden absolute top-1 right-1 bg-primary-container border border-on-surface px-2 py-0.5 rounded-full text-xs font-bold text-on-primary-fixed z-10">
                 ✋ Fingerspelling
               </div>
             </div>
@@ -692,8 +695,12 @@
     islPlaceholder.classList.add('hidden'); islPlaceholder.classList.remove('flex');
     islActive.classList.remove('hidden'); islActive.classList.add('flex');
 
-    // Detect if we have fingerspelling (word not in dict)
+    // Detect if we have fingerspelling or gif
     const hasFingerspell = gestures.some(g => g.type === 'letter');
+    const hasGif = gestures.some(g => g.type === 'gif');
+
+    // Apply specific styles to image container based on content type
+    gestureImg.style.objectFit = hasGif ? 'contain' : 'cover';
 
     activeAnimation = animateGestures(
       gestures,

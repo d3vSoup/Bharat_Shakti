@@ -423,10 +423,11 @@ function renderHandSvg(label, pose, type) {
           font-size="10" font-weight="600" fill="${accentCol}" opacity="0.75">${label2}</text>
   ` : '';
 
-  // Main label at top
+  // For letters: large centered letter + tiny badge top-right
+  // For words: compact label banner at very top
   const isLetter = type === 'letter';
-  const labelFontSize = isLetter ? 52 : (label.length > 8 ? 14 : label.length > 5 ? 18 : 22);
-  const labelY = isLetter ? 50 : 26;
+  const labelFontSize = isLetter ? 80 : (label.length > 8 ? 13 : label.length > 5 ? 17 : 22);
+  const labelY = isLetter ? 62 : 24;
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">
   <defs>
@@ -453,28 +454,28 @@ function renderHandSvg(label, pose, type) {
 
   <!-- Label -->
   ${isLetter ? `
+  <!-- Big letter — top-left area, away from the hand -->
   <text x="${W/2}" y="${labelY}" text-anchor="middle"
-        font-family="'Atkinson Hyperlegible Next', sans-serif"
-        font-size="${labelFontSize}" font-weight="800"
-        fill="${textCol}" opacity="0.15">${label}</text>
+        font-family="'Atkinson Hyperlegible Next', Arial, sans-serif"
+        font-size="${labelFontSize}" font-weight="900"
+        fill="${textCol}" opacity="0.22">${label}</text>
   ` : `
-  <rect x="8" y="8" width="${W-16}" height="30" rx="5" fill="${accentCol}" opacity="0.1"/>
   <text x="${W/2}" y="${labelY}" text-anchor="middle"
-        font-family="'Atkinson Hyperlegible Next', sans-serif"
+        font-family="'Atkinson Hyperlegible Next', Arial, sans-serif"
         font-size="${labelFontSize}" font-weight="800"
         fill="${textCol}">${label}</text>
   `}
 
-  <!-- Type badge -->
+  <!-- Type badge — TOP-RIGHT corner, never overlapping the hand -->
   ${isLetter ? `
-  <rect x="8" y="8" width="68" height="18" rx="9" fill="${accentCol}" opacity="0.15"/>
-  <text x="42" y="20" text-anchor="middle"
-        font-family="sans-serif" font-size="9" font-weight="700"
-        fill="${textCol}" letter-spacing="0.05em">FINGERSPELL</text>
+  <rect x="${W-82}" y="8" width="74" height="18" rx="9" fill="${accentCol}" opacity="0.18"/>
+  <text x="${W-45}" y="20" text-anchor="middle"
+        font-family="Arial, sans-serif" font-size="8.5" font-weight="700"
+        fill="${textCol}" letter-spacing="0.08em">✋ FINGERSPELL</text>
   ` : `
-  <rect x="8" y="${H-26}" width="42" height="18" rx="9" fill="${accentCol}" opacity="0.15"/>
-  <text x="29" y="${H-14}" text-anchor="middle"
-        font-family="sans-serif" font-size="9" font-weight="700"
+  <rect x="${W-54}" y="${H-26}" width="46" height="18" rx="9" fill="${accentCol}" opacity="0.15"/>
+  <text x="${W-31}" y="${H-14}" text-anchor="middle"
+        font-family="Arial, sans-serif" font-size="8.5" font-weight="700"
         fill="${textCol}" letter-spacing="0.05em">ISL SIGN</text>
   `}
 
