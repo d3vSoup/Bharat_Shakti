@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<meta name="description" content="Bharat Shakti Deaf Mode — Live English-to-ISL translation with real-time speech recognition and classroom sync."/>
+<title>Deaf Mode | Bharat Shakti</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:ital,wght@0,200..800;1,200..800&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        colors: {
+          "secondary-fixed-dim": "#afc8f0","inverse-primary": "#ffba20","on-primary-fixed": "#271900",
+          "on-tertiary-container": "#734633","surface-container": "#f1eee7","tertiary-container": "#f5b79e",
+          "on-tertiary-fixed-variant": "#673c29","background": "#fcf9f2","on-secondary-fixed": "#001c3a",
+          "on-primary-fixed-variant": "#5e4200","error-container": "#ffdad6","error": "#ba1a1a",
+          "outline": "#837560","tertiary-fixed-dim": "#f7b89f","on-error-container": "#93000a",
+          "surface-container-high": "#ebe8e1","surface-tint": "#7c5800","surface": "#fcf9f2",
+          "surface-container-low": "#f6f3ec","on-primary-container": "#6b4c00","surface-container-lowest": "#ffffff",
+          "surface-container-highest": "#e5e2db","secondary": "#476083","surface-bright": "#fcf9f2",
+          "primary-fixed-dim": "#ffba20","secondary-container": "#bdd6ff","on-surface-variant": "#514532",
+          "inverse-on-surface": "#f3f0e9","on-primary": "#ffffff","primary-fixed": "#ffdea8",
+          "on-error": "#ffffff","on-secondary": "#ffffff","inverse-surface": "#31312c","tertiary": "#82533e",
+          "outline-variant": "#d5c4ab","on-secondary-container": "#445d80","tertiary-fixed": "#ffdbcd",
+          "on-tertiary-fixed": "#331204","on-surface": "#1c1c18","secondary-fixed": "#d4e3ff",
+          "primary": "#7c5800","surface-variant": "#e5e2db","on-secondary-fixed-variant": "#2f486a",
+          "on-tertiary": "#ffffff","primary-container": "#ffb800","surface-dim": "#dcdad3","on-background": "#1c1c18"
+        },
+        borderRadius: { "DEFAULT": "0.25rem","lg": "0.5rem","xl": "0.75rem","full": "9999px" },
+        spacing: {
+          "xs": "0.5rem","lg": "4rem","base": "8px","md": "2rem","sm": "1rem",
+          "margin-mobile": "16px","xl": "8rem","margin-desktop": "64px","gutter": "24px"
+        },
+        fontFamily: {
+          "sans": ["Atkinson Hyperlegible Next","system-ui","sans-serif"],
+          "label-lg": ["Atkinson Hyperlegible Next"],"headline-xl": ["Atkinson Hyperlegible Next"],
+          "body-md": ["Atkinson Hyperlegible Next"],"headline-md": ["Atkinson Hyperlegible Next"],
+          "headline-lg": ["Atkinson Hyperlegible Next"],"body-lg": ["Atkinson Hyperlegible Next"]
+        },
+        fontSize: {
+          "label-lg": ["16px",{"lineHeight":"1.2","letterSpacing":"0.05em","fontWeight":"700"}],
+          "headline-xl": ["48px",{"lineHeight":"1.1","letterSpacing":"-0.02em","fontWeight":"800"}],
+          "headline-lg-mobile": ["30px",{"lineHeight":"1.2","fontWeight":"700"}],
+          "body-md": ["18px",{"lineHeight":"1.6","fontWeight":"400"}],
+          "headline-md": ["28px",{"lineHeight":"1.3","fontWeight":"700"}],
+          "headline-lg": ["36px",{"lineHeight":"1.2","fontWeight":"700"}],
+          "body-lg": ["22px",{"lineHeight":"1.6","fontWeight":"400"}]
+        }
+      }
+    }
+  }
+</script>
+<style>
+  body {
+    background: transparent;
+    font-family: 'Atkinson Hyperlegible Next', sans-serif;
+  }
+  .paper-shadow    { box-shadow: 4px 4px 0px 0px #1c1c18; }
+  .paper-shadow-sm { box-shadow: 2px 2px 0px 0px #1c1c18; }
+  .torn-edge       { clip-path: polygon(0 0, 100% 2%, 98% 100%, 2% 98%); }
+  .torn-edge-bottom{ clip-path: polygon(0 0, 100% 0%, 98% 95%, 2% 100%); }
+  .focus-ring:focus-within { outline: 4px solid #ffb800; outline-offset: 4px; }
+  a:focus-visible, button:focus-visible { outline: 4px solid #ffb800; outline-offset: 4px; }
+  .material-symbols-outlined { font-variation-settings:'FILL' 1,'wght' 400; font-size:inherit; vertical-align:middle; }
+  /* Translucent surfaces so gradient shows through */
+  header { background: rgba(252,249,242,0.88) !important; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+  footer { background: rgba(229,226,219,0.82) !important; backdrop-filter: blur(8px); }
+  .bg-surface  { background: rgba(252,249,242,0.75) !important; backdrop-filter: blur(8px); }
+  .bg-\[\#FFFBF2\] { background: rgba(255,251,242,0.78) !important; backdrop-filter: blur(6px); }
+  /* Wave bars */
+  .wave-bar { width:3px; border-radius:99px; animation:wave 1.2s ease infinite; background:currentColor; }
+  .wave-bar:nth-child(1){height:6px;animation-delay:0.0s}
+  .wave-bar:nth-child(2){height:14px;animation-delay:0.1s}
+  .wave-bar:nth-child(3){height:18px;animation-delay:0.2s}
+  .wave-bar:nth-child(4){height:10px;animation-delay:0.3s}
+  .wave-bar:nth-child(5){height:20px;animation-delay:0.4s}
+  .wave-bar:nth-child(6){height:8px;animation-delay:0.5s}
+  @keyframes wave { 0%,100%{transform:scaleY(1)} 50%{transform:scaleY(0.3)} }
+  @keyframes slideInCard { from{opacity:0;transform:scale(0.8) translateY(10px)} to{opacity:1;transform:scale(1) translateY(0)} }
+  .isl-card-anim { animation: slideInCard 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) both; }
+  @keyframes fadeInItem { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+  .transcript-entry { animation: fadeInItem 0.25s ease both; }
+</style>
+</head>
+<body class="text-on-background min-h-screen flex flex-col">
+
+<!-- Header -->
+<header class="w-full border-b-2 border-on-surface bg-surface sticky top-0 z-50">
+  <div class="flex justify-between items-center w-full px-margin-mobile md:px-margin-desktop py-3 max-w-7xl mx-auto">
+    <div class="flex items-center gap-3">
+      <a href="index.html" class="flex items-center gap-2 hover:opacity-80 transition-opacity">
+        <img alt="Logo" class="h-8 w-8 object-contain rounded" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDD3YIhH3GKawDIW8h2JzTeX6tFkqKFHQySiWF7uNKZxe7trmLqfyT-pZJF9fwB3uMn95dW18_LORTSYaojc2am6kWbNQr3Gu3nRAIuqaM9rcAIudkExbVyHlWxSArAdRH8CuxVFiNcz_A-KQh0nZh-RE2j_mknqpl-qbFMtU_8WBoODVroVqw0-kYSnazkvwVDG_CLz6Ap1U1hf3G7xwg1cmC1BUa5k0LMG-0LGcCG7AEoNnBcgujnFA"/>
+        <span class="font-bold text-primary tracking-tight">Bharat Shakti</span>
+      </a>
+      <span class="text-outline-variant mx-1">›</span>
+      <div class="flex items-center gap-2 bg-secondary-container border-2 border-on-surface px-3 py-1 rounded-full paper-shadow-sm">
+        <span class="material-symbols-outlined text-on-secondary-container text-base">hearing_disabled</span>
+        <span class="font-label-lg text-xs font-bold text-on-secondary-container uppercase tracking-wider">Deaf Mode</span>
+      </div>
+    </div>
+    <div class="flex items-center gap-3">
+      <div id="wsStatus" class="flex items-center gap-2 border-2 border-outline px-3 py-1 rounded-full bg-surface-container text-sm font-bold text-on-surface-variant">
+        <span class="w-2 h-2 bg-outline rounded-full inline-block" id="wsDot"></span>
+        <span id="wsText">Connecting…</span>
+      </div>
+      <a href="blind.html" class="bg-surface border-2 border-on-surface px-3 py-1.5 text-sm font-bold text-on-surface hover:bg-tertiary-container transition-colors rounded-sm">Switch: Blind Mode</a>
+    </div>
+  </div>
+</header>
+
+<main class="flex-grow w-full max-w-7xl mx-auto px-margin-mobile md:px-margin-desktop py-8">
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+
+    <!-- LEFT: Teacher Dashboard -->
+    <div class="flex flex-col gap-6">
+      <div class="bg-surface border-2 border-on-surface paper-shadow p-6">
+        <div class="border-b-2 border-on-surface pb-4 mb-6">
+          <h1 class="font-headline-md text-2xl font-bold text-on-surface flex items-center gap-2">
+            <span class="material-symbols-outlined text-primary text-2xl">record_voice_over</span>
+            Teacher Dashboard
+          </h1>
+          <p class="text-sm text-on-surface-variant mt-1">Broadcast live speech to all student screens</p>
+        </div>
+
+        <!-- Mic button -->
+        <button id="micBtn" aria-label="Start voice transcription" aria-pressed="false"
+                class="w-full flex items-center justify-center gap-3 py-4 border-2 border-on-surface border-b-[3px] rounded-sm font-bold text-lg transition-all hover:brightness-95 active:border-b-0 active:translate-y-[3px] paper-shadow-sm mb-4 bg-primary-container text-on-primary-fixed focus-ring">
+          <span class="material-symbols-outlined text-2xl" id="micIcon">mic</span>
+          <div class="flex items-center gap-2 h-6" id="micBars">
+            <!-- wave bars hidden until recording -->
+          </div>
+          <span id="micLabel">Start Transcribing</span>
+        </button>
+
+        <!-- Interim display -->
+        <div id="interimBar"
+             aria-live="polite"
+             class="min-h-10 bg-surface-container border-2 border-dashed border-outline p-3 rounded-sm text-sm text-on-surface-variant italic mb-5">
+          Speak to see live transcription…
+        </div>
+
+        <!-- Transcript feed -->
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="font-bold text-on-surface text-sm uppercase tracking-wider flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-secondary text-base">history</span>Transcript Log
+          </h3>
+          <button onclick="clearFeed()" class="text-xs font-bold text-on-surface-variant hover:text-error border border-outline-variant px-2 py-1 rounded-sm hover:border-error transition-colors">Clear</button>
+        </div>
+        <div id="feedBox" aria-live="polite" aria-label="Transcript feed"
+             class="space-y-3 max-h-64 overflow-y-auto pr-1">
+          <p class="text-sm text-on-surface-variant italic p-3 bg-surface-container-low border border-outline-variant rounded-sm">Transcripts will appear here…</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: ISL Visualiser -->
+    <div class="flex flex-col gap-6">
+      <div class="bg-[#FFFBF2] border-2 border-on-surface paper-shadow p-6 torn-edge-bottom">
+        <div class="border-b-2 border-on-surface pb-4 mb-6 flex items-start justify-between">
+          <div>
+            <h2 class="font-headline-md text-2xl font-bold text-on-surface flex items-center gap-2">
+              <span class="material-symbols-outlined text-secondary text-2xl">sign_language</span>
+              ISL Visualiser
+            </h2>
+            <p class="text-sm text-on-surface-variant mt-1">English SVO → ISL SOV reordering</p>
+          </div>
+          <div class="flex items-center gap-1.5 bg-secondary-container border-2 border-on-surface px-3 py-1 rounded-full paper-shadow-sm">
+            <span class="w-2 h-2 bg-secondary rounded-full animate-pulse"></span>
+            <span class="text-xs font-bold text-on-secondary-container uppercase tracking-wider">Live</span>
+          </div>
+        </div>
+
+        <!-- ISL Stage -->
+        <div class="bg-on-surface rounded-sm border-2 border-on-surface p-8 flex flex-col items-center justify-center min-h-56 mb-5 relative overflow-hidden">
+          <!-- subtle warm light beam -->
+          <div class="absolute inset-0 opacity-10" style="background: radial-gradient(ellipse 80% 60% at 50% 20%, #ffb800 0%, transparent 60%)"></div>
+
+          <div id="islPlaceholder" class="flex flex-col items-center gap-3 text-inverse-on-surface opacity-40 relative z-10">
+            <span class="material-symbols-outlined text-5xl" style="font-variation-settings:'FILL' 0,'wght' 300">sign_language</span>
+            <span class="text-sm">Waiting for teacher speech…</span>
+          </div>
+
+          <div id="islCardWrap" class="hidden flex-col items-center gap-5 relative z-10 w-full">
+            <!-- Gloss progress pills -->
+            <div id="glossProgress" class="flex flex-wrap gap-2 justify-center"></div>
+            <!-- Big ISL word card -->
+            <div id="islCard"
+                 class="isl-card-anim bg-primary-container border-2 border-primary text-on-primary-container rounded-sm px-10 py-5 font-extrabold text-5xl tracking-wide paper-shadow">
+              —
+            </div>
+          </div>
+        </div>
+
+        <!-- Gloss ribbon -->
+        <div id="glossRibbon" class="bg-surface-container border-2 border-on-surface p-3 rounded-sm text-sm font-mono text-on-surface-variant text-center">
+          ISL Gloss sequence will appear here after speech
+        </div>
+
+        <!-- Legend -->
+        <div class="mt-5 pt-4 border-t-2 border-outline-variant">
+          <p class="text-xs text-on-surface-variant leading-relaxed">
+            <strong class="text-on-surface">How it works:</strong> Teacher speaks in English (Subject-Verb-Object). 
+            The NLP pipeline reorders to ISL grammar (Subject-Object-Verb) and displays each word as a sequential sign card.
+          </p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<!-- Footer -->
+<footer class="w-full border-t-2 border-on-surface bg-surface-container-highest mt-8">
+  <div class="flex justify-between items-center px-margin-mobile md:px-margin-desktop py-4 max-w-7xl mx-auto text-sm text-on-surface-variant">
+    <span>Bharat Shakti — PS4 Inclusive Education</span>
+    <a href="index.html" class="hover:text-primary underline">← Back to Home</a>
+  </div>
+</footer>
+
+<script>
+  /* ── DOM refs ─────────────────────────────────────── */
+  const micBtn     = document.getElementById('micBtn');
+  const micLabel   = document.getElementById('micLabel');
+  const micBars    = document.getElementById('micBars');
+  const interimBar = document.getElementById('interimBar');
+  const feedBox    = document.getElementById('feedBox');
+  const islPlaceholder = document.getElementById('islPlaceholder');
+  const islCardWrap    = document.getElementById('islCardWrap');
+  const islCard        = document.getElementById('islCard');
+  const glossProgress  = document.getElementById('glossProgress');
+  const glossRibbon    = document.getElementById('glossRibbon');
+
+  let socket, recognition, isRecording = false;
+
+  /* ── Speech Recognition ──────────────────────────── */
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (SR) {
+    recognition = new SR();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = 'en-IN';
+
+    recognition.onresult = e => {
+      let interim = '', final = '';
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const t = e.results[i][0].transcript;
+        if (e.results[i].isFinal) final += t; else interim += t;
+      }
+      if (interim) {
+        interimBar.textContent = interim;
+        interimBar.className = 'min-h-10 bg-primary-fixed border-2 border-primary p-3 rounded-sm text-sm text-on-primary-fixed italic mb-5';
+      }
+      if (final.trim()) {
+        interimBar.textContent = 'Speak to see live transcription…';
+        interimBar.className = 'min-h-10 bg-surface-container border-2 border-dashed border-outline p-3 rounded-sm text-sm text-on-surface-variant italic mb-5';
+        broadcastText(final.trim());
+      }
+    };
+
+    recognition.onerror = e => { if (e.error !== 'no-speech') stopRecording(); };
+    recognition.onend   = () => { if (isRecording) recognition.start(); };
+  } else {
+    micBtn.disabled = true;
+    micLabel.textContent = 'Speech API not supported';
+  }
+
+  function startRecording() {
+    recognition.start();
+    isRecording = true;
+    micBtn.className = 'w-full flex items-center justify-center gap-3 py-4 border-2 border-on-surface border-b-[3px] rounded-sm font-bold text-lg transition-all active:border-b-0 active:translate-y-[3px] paper-shadow-sm mb-4 bg-error-container text-on-error-container focus-ring';
+    micBtn.setAttribute('aria-pressed','true');
+    micLabel.textContent = 'Recording…  Stop';
+    micBars.innerHTML = '<div class="flex items-end gap-1 h-6 text-error">'+
+      '<div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>'+
+      '<div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div></div>';
+  }
+
+  function stopRecording() {
+    recognition.stop();
+    isRecording = false;
+    micBtn.className = 'w-full flex items-center justify-center gap-3 py-4 border-2 border-on-surface border-b-[3px] rounded-sm font-bold text-lg transition-all hover:brightness-95 active:border-b-0 active:translate-y-[3px] paper-shadow-sm mb-4 bg-primary-container text-on-primary-fixed focus-ring';
+    micBtn.setAttribute('aria-pressed','false');
+    micLabel.textContent = 'Start Transcribing';
+    micBars.innerHTML = '';
+    interimBar.textContent = 'Speak to see live transcription…';
+    interimBar.className = 'min-h-10 bg-surface-container border-2 border-dashed border-outline p-3 rounded-sm text-sm text-on-surface-variant italic mb-5';
+  }
+
+  micBtn.addEventListener('click', () => isRecording ? stopRecording() : startRecording());
+
+  function broadcastText(text) {
+    if (socket && socket.readyState === WebSocket.OPEN) socket.send(JSON.stringify({ type:'speech_input', text }));
+    addTranscriptEntry(text);
+    renderISL(text);
+  }
+
+  /* ── Feed ────────────────────────────────────────── */
+  function addTranscriptEntry(text) {
+    if (feedBox.querySelector('p')) feedBox.innerHTML = '';
+    const now = new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    const div = document.createElement('div');
+    div.className = 'transcript-entry flex gap-3 items-start p-3 bg-surface-container-low border-2 border-outline-variant rounded-sm';
+    div.innerHTML = `
+      <div class="w-7 h-7 bg-secondary-container border border-outline rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold text-on-secondary-container">T</div>
+      <div class="flex-1 min-w-0">
+        <p class="text-sm text-on-surface leading-relaxed">${text}</p>
+        <p class="text-xs text-on-surface-variant mt-0.5 font-mono">${now}</p>
+      </div>`;
+    feedBox.prepend(div);
+  }
+
+  function clearFeed() {
+    feedBox.innerHTML = '<p class="text-sm text-on-surface-variant italic p-3 bg-surface-container-low border border-outline-variant rounded-sm">Transcripts will appear here…</p>';
+    islPlaceholder.classList.remove('hidden');
+    islPlaceholder.classList.add('flex');
+    islCardWrap.classList.add('hidden');
+    islCardWrap.classList.remove('flex');
+    glossRibbon.textContent = 'ISL Gloss sequence will appear here after speech';
+  }
+
+  /* ── ISL Parser ──────────────────────────────────── */
+  const STOPWORDS = new Set(['is','are','was','were','the','a','an','to','am','of','in','at','on','and','or','but','with','for','do']);
+
+  function toISLGloss(text) {
+    const words = text.toLowerCase().replace(/[^a-z\s]/g,'').split(/\s+/).filter(w=>w&&!STOPWORDS.has(w));
+    if (!words.length) return [text.toUpperCase()];
+    if (words.length >= 3) {
+      const [subj, verb, ...rest] = words;
+      return [...rest, subj, verb].map(w=>w.toUpperCase());
+    }
+    return words.map(w=>w.toUpperCase());
+  }
+
+  let renderTimer = null;
+
+  function renderISL(text) {
+    if (renderTimer) clearTimeout(renderTimer);
+    const glossWords = toISLGloss(text);
+    glossRibbon.textContent = `ISL Gloss: ${glossWords.join(' — ')}`;
+
+    // Show stage
+    islPlaceholder.classList.add('hidden'); islPlaceholder.classList.remove('flex');
+    islCardWrap.classList.remove('hidden'); islCardWrap.classList.add('flex');
+
+    // Build progress pills
+    glossProgress.innerHTML = '';
+    glossWords.forEach((w,i) => {
+      const s = document.createElement('span');
+      s.id = `gw${i}`;
+      s.className = 'text-xs font-bold px-2.5 py-1 rounded-full border-2 border-outline-variant bg-surface-container text-on-surface-variant transition-all';
+      s.textContent = w;
+      glossProgress.appendChild(s);
+    });
+
+    let idx = 0;
+    function showNext() {
+      if (idx >= glossWords.length) {
+        renderTimer = setTimeout(() => {
+          islPlaceholder.classList.remove('hidden'); islPlaceholder.classList.add('flex');
+          islCardWrap.classList.add('hidden'); islCardWrap.classList.remove('flex');
+          glossRibbon.textContent = 'ISL Gloss sequence will appear here after speech';
+        }, 3500);
+        return;
+      }
+      if (idx > 0) {
+        const prev = document.getElementById(`gw${idx-1}`);
+        if (prev) prev.className = 'text-xs font-bold px-2.5 py-1 rounded-full border-2 border-outline-variant bg-surface-container-highest text-on-surface-variant line-through transition-all';
+      }
+      const cur = document.getElementById(`gw${idx}`);
+      if (cur) cur.className = 'text-xs font-bold px-2.5 py-1 rounded-full border-2 border-primary bg-primary-container text-on-primary-fixed transition-all';
+
+      // Animate card
+      islCard.style.animation = 'none';
+      void islCard.offsetWidth;
+      islCard.style.animation = '';
+      islCard.className = 'isl-card-anim bg-primary-container border-2 border-on-surface text-on-primary-fixed rounded-sm px-10 py-5 font-extrabold text-5xl tracking-wide paper-shadow';
+      islCard.textContent = glossWords[idx];
+
+      idx++;
+      renderTimer = setTimeout(showNext, 1350);
+    }
+    showNext();
+  }
+
+  /* ── WebSocket ───────────────────────────────────── */
+  const wsDot  = document.getElementById('wsDot');
+  const wsText = document.getElementById('wsText');
+
+  function setWsState(state) {
+    const map = {
+      online:     ['bg-primary','Connected'],
+      error:      ['bg-error',  'Disconnected'],
+      connecting: ['bg-outline', 'Connecting…']
+    };
+    const [dotCls, label] = map[state]||map.connecting;
+    wsDot.className = `w-2 h-2 rounded-full inline-block ${dotCls}`;
+    wsText.textContent = label;
+  }
+
+  function connectWS() {
+    setWsState('connecting');
+    socket = new WebSocket('ws://localhost:8000/ws/student/deaf');
+    socket.onopen    = () => setWsState('online');
+    socket.onmessage = e  => { const d=JSON.parse(e.data); if(d.type==='broadcast'&&d.text){addTranscriptEntry(d.text);renderISL(d.text);} };
+    socket.onclose   = () => { setWsState('error'); setTimeout(connectWS,3000); };
+  }
+
+  window.addEventListener('load', connectWS);
+</script>
+<script src="gradient-bg.js"></script>
+</body>
+</html>

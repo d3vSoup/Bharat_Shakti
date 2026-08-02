@@ -1,0 +1,328 @@
+/* ================================================================
+   BHARAT SHAKTI — Design System
+   Inclusive Classroom Adaptive Platform
+   ================================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap');
+
+/* ── Design Tokens ─────────────────────────────────────────────── */
+:root {
+  /* Palette */
+  --clr-bg:          #080b14;
+  --clr-surface:     rgba(14, 18, 32, 0.8);
+  --clr-surface-2:   rgba(22, 28, 46, 0.6);
+  --clr-border:      rgba(255, 255, 255, 0.07);
+  --clr-border-hi:   rgba(255, 255, 255, 0.14);
+
+  /* Text */
+  --clr-text:        #eef0f6;
+  --clr-muted:       #6b7280;
+  --clr-dim:         #374151;
+
+  /* Accent — Indigo (brand) */
+  --clr-accent:      #6366f1;
+  --clr-accent-2:    #8b5cf6;
+  --clr-grad:        linear-gradient(135deg, #6366f1, #a855f7);
+
+  /* Mode colours */
+  --clr-amber:       #f59e0b;    /* Blind Mode   */
+  --clr-amber-dim:   rgba(245, 158, 11, 0.12);
+  --clr-cyan:        #06b6d4;    /* Deaf Mode    */
+  --clr-cyan-dim:    rgba(6, 182, 212, 0.12);
+  --clr-green:       #10b981;    /* Online state */
+  --clr-red:         #ef4444;    /* Error state  */
+
+  /* Shadows */
+  --shadow-sm:       0 2px 8px rgba(0,0,0,0.35);
+  --shadow-md:       0 8px 30px rgba(0,0,0,0.45);
+  --shadow-lg:       0 20px 60px rgba(0,0,0,0.55);
+  --shadow-glow-a:   0 0 24px rgba(99, 102, 241, 0.25);
+  --shadow-glow-y:   0 0 24px rgba(245, 158, 11, 0.30);
+  --shadow-glow-c:   0 0 24px rgba(6, 182, 212, 0.30);
+
+  /* Spacing & Geometry */
+  --r-sm:  8px;
+  --r-md:  14px;
+  --r-lg:  20px;
+  --r-xl:  28px;
+  --r-2xl: 40px;
+
+  /* Typography */
+  --font-sans:  'Inter', system-ui, sans-serif;
+  --font-mono:  'JetBrains Mono', monospace;
+
+  /* Transition */
+  --ease:        cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  --t-fast:  0.15s;
+  --t-base:  0.25s;
+  --t-slow:  0.45s;
+}
+
+/* ── Forced-colours (high-contrast OS mode) ─────────────────────── */
+@media (forced-colors: active) {
+  :root {
+    --clr-bg:       Canvas;
+    --clr-surface:  ButtonFace;
+    --clr-text:     CanvasText;
+    --clr-border:   ButtonBorder;
+    --clr-accent:   Highlight;
+    --clr-amber:    Highlight;
+    --clr-cyan:     Highlight;
+  }
+}
+
+/* ── Reset ─────────────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--clr-bg);
+  color: var(--clr-text);
+  min-height: 100vh;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* Background mesh */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 50% at 20% 20%, rgba(99,102,241,0.08) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 80%, rgba(168,85,247,0.06) 0%, transparent 60%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── Typography ─────────────────────────────────────────────────── */
+h1 {
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  line-height: 1.05;
+}
+h2 { font-size: clamp(1.25rem, 2.5vw, 1.75rem); font-weight: 700; letter-spacing: -0.02em; }
+h3 { font-size: 1.1rem; font-weight: 600; }
+p  { color: var(--clr-muted); font-size: 0.9375rem; }
+
+.gradient-text {
+  background: var(--clr-grad);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Glass Card ─────────────────────────────────────────────────── */
+.glass-card {
+  background: var(--clr-surface);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--r-xl);
+  box-shadow: var(--shadow-md);
+  position: relative;
+  overflow: hidden;
+}
+
+/* subtle inner top highlight */
+.glass-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.04) 0%, transparent 50%);
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+/* ── Layout helpers ─────────────────────────────────────────────── */
+.page-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 2rem;
+  position: relative;
+  z-index: 1;
+}
+
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  width: 100%;
+  max-width: 1300px;
+  padding: 2rem;
+  position: relative;
+  z-index: 1;
+}
+@media (max-width: 900px) { .two-col { grid-template-columns: 1fr; } }
+
+/* ── Buttons ────────────────────────────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 0.9375rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--r-md);
+  border: none;
+  cursor: pointer;
+  transition: transform var(--t-fast) var(--ease),
+              box-shadow var(--t-base) var(--ease),
+              background var(--t-base) var(--ease),
+              opacity var(--t-fast) var(--ease);
+  position: relative;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,0.08);
+  opacity: 0;
+  transition: opacity var(--t-fast);
+}
+.btn:hover::after  { opacity: 1; }
+.btn:active        { transform: scale(0.97); }
+.btn:focus-visible { outline: 2px solid var(--clr-accent); outline-offset: 3px; }
+
+.btn-primary {
+  background: var(--clr-grad);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(99,102,241,0.30);
+}
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(99,102,241,0.40); }
+
+.btn-amber {
+  background: var(--clr-amber);
+  color: #0a0a0a;
+  box-shadow: 0 4px 16px rgba(245,158,11,0.30);
+}
+.btn-amber:hover { transform: translateY(-2px); box-shadow: var(--shadow-glow-y); }
+
+.btn-cyan {
+  background: var(--clr-cyan);
+  color: #0a0a0a;
+  box-shadow: 0 4px 16px rgba(6,182,212,0.30);
+}
+.btn-cyan:hover { transform: translateY(-2px); box-shadow: var(--shadow-glow-c); }
+
+.btn-ghost {
+  background: rgba(255,255,255,0.06);
+  color: var(--clr-text);
+  border: 1px solid var(--clr-border-hi);
+}
+.btn-ghost:hover { background: rgba(255,255,255,0.10); transform: translateY(-1px); }
+
+/* ── Status Pill ────────────────────────────────────────────────── */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+}
+
+.pill-amber { color: var(--clr-amber); background: var(--clr-amber-dim); }
+.pill-cyan  { color: var(--clr-cyan);  background: var(--clr-cyan-dim);  }
+.pill-green { color: var(--clr-green); background: rgba(16,185,129,0.12); }
+.pill-red   { color: var(--clr-red);   background: rgba(239,68,68,0.12); }
+
+/* Pulse dot inside pill */
+.pill .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: blink 1.8s ease infinite;
+}
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.3; }
+}
+
+/* ── Kbd badge ──────────────────────────────────────────────────── */
+kbd {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.15em 0.5em;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid var(--clr-border-hi);
+  border-radius: 5px;
+  color: var(--clr-muted);
+}
+
+/* ── Panel (within glass-card) ──────────────────────────────────── */
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 1rem;
+  margin-bottom: 1.25rem;
+  border-bottom: 1px solid var(--clr-border);
+}
+
+/* ── Scroll area ────────────────────────────────────────────────── */
+.scroll-box {
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--clr-border-hi) transparent;
+}
+.scroll-box::-webkit-scrollbar { width: 4px; }
+.scroll-box::-webkit-scrollbar-track { background: transparent; }
+.scroll-box::-webkit-scrollbar-thumb { background: var(--clr-border-hi); border-radius: 99px; }
+
+/* ── Animations ─────────────────────────────────────────────────── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.78); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.anim-fade-up    { animation: fadeUp  var(--t-slow) var(--ease-spring) both; }
+.anim-scale-in   { animation: scaleIn var(--t-base) var(--ease-spring) both; }
+.anim-delay-1    { animation-delay: 0.1s; }
+.anim-delay-2    { animation-delay: 0.2s; }
+.anim-delay-3    { animation-delay: 0.3s; }
+
+/* Reduced-motion overrides */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+
+/* ── Divider ────────────────────────────────────────────────────── */
+.divider-v {
+  width: 1px;
+  align-self: stretch;
+  background: linear-gradient(to bottom, transparent, var(--clr-border-hi), transparent);
+}

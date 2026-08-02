@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<meta name="description" content="Bharat Shakti — Inclusive Classroom AI. An adaptive platform for deaf and blind students powered by real-time ISL translation and Braille input."/>
+<title>Bharat Shakti | Inclusive Education AI</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:ital,wght@0,200..800;1,200..800&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        colors: {
+          "secondary-fixed-dim": "#afc8f0","inverse-primary": "#ffba20","on-primary-fixed": "#271900",
+          "on-tertiary-container": "#734633","surface-container": "#f1eee7","tertiary-container": "#f5b79e",
+          "on-tertiary-fixed-variant": "#673c29","background": "#fcf9f2","on-secondary-fixed": "#001c3a",
+          "on-primary-fixed-variant": "#5e4200","error-container": "#ffdad6","error": "#ba1a1a",
+          "outline": "#837560","tertiary-fixed-dim": "#f7b89f","on-error-container": "#93000a",
+          "surface-container-high": "#ebe8e1","surface-tint": "#7c5800","surface": "#fcf9f2",
+          "surface-container-low": "#f6f3ec","on-primary-container": "#6b4c00","surface-container-lowest": "#ffffff",
+          "surface-container-highest": "#e5e2db","secondary": "#476083","surface-bright": "#fcf9f2",
+          "primary-fixed-dim": "#ffba20","secondary-container": "#bdd6ff","on-surface-variant": "#514532",
+          "inverse-on-surface": "#f3f0e9","on-primary": "#ffffff","primary-fixed": "#ffdea8",
+          "on-error": "#ffffff","on-secondary": "#ffffff","inverse-surface": "#31312c","tertiary": "#82533e",
+          "outline-variant": "#d5c4ab","on-secondary-container": "#445d80","tertiary-fixed": "#ffdbcd",
+          "on-tertiary-fixed": "#331204","on-surface": "#1c1c18","secondary-fixed": "#d4e3ff",
+          "primary": "#7c5800","surface-variant": "#e5e2db","on-secondary-fixed-variant": "#2f486a",
+          "on-tertiary": "#ffffff","primary-container": "#ffb800","surface-dim": "#dcdad3","on-background": "#1c1c18"
+        },
+        borderRadius: { "DEFAULT": "0.25rem","lg": "0.5rem","xl": "0.75rem","full": "9999px" },
+        spacing: {
+          "xs": "0.5rem","lg": "4rem","base": "8px","md": "2rem","sm": "1rem",
+          "margin-mobile": "16px","xl": "8rem","margin-desktop": "64px","gutter": "24px"
+        },
+        fontFamily: {
+          "sans": ["Atkinson Hyperlegible Next","system-ui","sans-serif"],
+          "label-lg": ["Atkinson Hyperlegible Next"],"headline-xl": ["Atkinson Hyperlegible Next"],
+          "headline-lg-mobile": ["Atkinson Hyperlegible Next"],"body-md": ["Atkinson Hyperlegible Next"],
+          "headline-md": ["Atkinson Hyperlegible Next"],"headline-lg": ["Atkinson Hyperlegible Next"],
+          "body-lg": ["Atkinson Hyperlegible Next"]
+        },
+        fontSize: {
+          "label-lg": ["16px",{"lineHeight":"1.2","letterSpacing":"0.05em","fontWeight":"700"}],
+          "headline-xl": ["48px",{"lineHeight":"1.1","letterSpacing":"-0.02em","fontWeight":"800"}],
+          "headline-lg-mobile": ["30px",{"lineHeight":"1.2","fontWeight":"700"}],
+          "body-md": ["18px",{"lineHeight":"1.6","fontWeight":"400"}],
+          "headline-md": ["28px",{"lineHeight":"1.3","fontWeight":"700"}],
+          "headline-lg": ["36px",{"lineHeight":"1.2","fontWeight":"700"}],
+          "body-lg": ["22px",{"lineHeight":"1.6","fontWeight":"400"}]
+        }
+      }
+    }
+  }
+</script>
+<style>
+  body {
+    background: transparent;
+    font-family: 'Atkinson Hyperlegible Next', sans-serif;
+  }
+  .torn-edge       { clip-path: polygon(0 0, 100% 2%, 98% 100%, 2% 98%); }
+  .torn-edge-bottom{ clip-path: polygon(0 0, 100% 0%, 98% 95%, 2% 100%); }
+  .paper-shadow    { box-shadow: 4px 4px 0px 0px #1c1c18; }
+  .paper-shadow-sm { box-shadow: 2px 2px 0px 0px #1c1c18; }
+  .focus-ring:focus-within { outline: 4px solid #ffb800; outline-offset: 4px; }
+  a:focus-visible, button:focus-visible { outline: 4px solid #ffb800; outline-offset: 4px; border-radius: 2px; }
+  .material-symbols-outlined { font-variation-settings: 'FILL' 1, 'wght' 400; font-size: inherit; vertical-align: middle; }
+  /* Let the gradient canvas shine through semi-transparent surfaces */
+  header { background: rgba(252,249,242,0.88) !important; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+  footer { background: rgba(229,226,219,0.85) !important; backdrop-filter: blur(8px); }
+  section, .bg-surface, .bg-surface-container, .bg-surface-container-low { background: rgba(255, 255, 255, 0.7) !important; backdrop-filter: blur(4px); }
+</style>
+</head>
+<body class="text-on-background min-h-screen flex flex-col">
+
+<!-- Header -->
+<header class="w-full border-b-2 border-on-surface bg-surface sticky top-0 z-50">
+  <div class="flex justify-between items-center w-full px-margin-mobile md:px-margin-desktop py-4 max-w-7xl mx-auto">
+    <div class="flex items-center gap-3">
+      <img alt="Bharat Shakti Logo — AegisEdu Shield" class="h-10 w-10 object-contain rounded-md" 
+           src="https://lh3.googleusercontent.com/aida-public/AB6AXuDD3YIhH3GKawDIW8h2JzTeX6tFkqKFHQySiWF7uNKZxe7trmLqfyT-pZJF9fwB3uMn95dW18_LORTSYaojc2am6kWbNQr3Gu3nRAIuqaM9rcAIudkExbVyHlWxSArAdRH8CuxVFiNcz_A-KQh0nZh-RE2j_mknqpl-qbFMtU_8WBoODVroVqw0-kYSnazkvwVDG_CLz6Ap1U1hf3G7xwg1cmC1BUa5k0LMG-0LGcCG7AEoNnBcgujnFA"/>
+      <div>
+        <div class="font-extrabold text-xl text-primary tracking-tight leading-none">Bharat Shakti</div>
+        <div class="text-xs text-on-surface-variant font-medium tracking-widest uppercase">Inclusive Education AI</div>
+      </div>
+    </div>
+    <nav aria-label="Main Navigation" class="hidden md:flex gap-8 items-center">
+      <a class="font-label-lg text-label-lg text-primary border-b-2 border-primary pb-1" href="#about">About</a>
+      <a class="font-label-lg text-label-lg text-on-surface-variant hover:text-primary hover:bg-primary-container transition-colors duration-200 px-2 py-1 rounded" href="#technology">Technology</a>
+    </nav>
+    <div class="flex items-center gap-3">
+      <a href="blind.html" id="enterBtn" class="bg-primary-container text-on-primary-fixed font-label-lg text-label-lg px-6 py-3 border-b-[3px] border-on-surface rounded-DEFAULT hover:brightness-95 transition-all focus-ring active:border-b-0 active:translate-y-[3px] inline-flex items-center gap-2">
+        <span class="material-symbols-outlined text-xl">accessibility_new</span>Enter
+      </a>
+    </div>
+  </div>
+</header>
+
+<main class="flex-grow">
+
+  <!-- Hero Section -->
+  <section class="w-full max-w-7xl mx-auto px-margin-mobile md:px-margin-desktop py-lg mt-md mb-lg">
+    <div class="bg-[#FFFBF2] border-2 border-on-surface torn-edge paper-shadow p-8 md:p-16 relative overflow-hidden flex flex-col items-center text-center">
+      <div class="absolute -top-10 -left-10 w-32 h-32 bg-tertiary-container rounded-full opacity-40 torn-edge"></div>
+      <div class="absolute -bottom-10 -right-10 w-48 h-48 bg-primary-fixed rounded-full opacity-40 torn-edge"></div>
+      <div class="relative z-10 mb-6 inline-flex items-center gap-2 bg-surface-container border-2 border-on-surface px-4 py-2 rounded-full paper-shadow-sm">
+        <span class="material-symbols-outlined text-primary text-lg">school</span>
+        <span class="font-label-lg text-label-lg text-primary tracking-widest uppercase text-sm">PS4 · Bharat Shakti · SIH</span>
+      </div>
+      <h1 class="font-headline-xl text-headline-lg-mobile md:text-headline-xl text-on-surface max-w-4xl relative z-10 mb-6">
+        Inclusivity is not a setting you toggle—<br/>
+        <span class="bg-primary-container text-on-primary-container px-3 pb-1 inline-block mt-2 torn-edge">it is an adaptive environment.</span>
+      </h1>
+      <p class="font-body-lg text-body-md text-on-surface-variant max-w-2xl mb-10 relative z-10">
+        Experience education through the <strong>'Silent Handshake'</strong> philosophy. Our platform adapts to your sensory needs autonomously—ensuring every student has a tailored, barrier-free learning journey.
+      </p>
+
+      <!-- Two CTA cards -->
+      <div class="relative z-10 grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-xl mb-8">
+        <a href="blind.html" id="blindCard"
+           class="group bg-surface border-2 border-on-surface paper-shadow p-5 text-left hover:bg-tertiary-container transition-colors focus-ring flex flex-col gap-3 rounded-sm">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-on-tertiary-container text-2xl">blind</span>
+            <span class="font-headline-md text-xl font-bold text-on-surface">Blind Mode</span>
+          </div>
+          <p class="text-sm text-on-surface-variant font-body-md leading-relaxed">Perkins Braille keyboard with full audio feedback.</p>
+          <div class="flex items-center gap-1 text-xs font-bold text-primary uppercase tracking-widest mt-auto">
+            Press <kbd class="bg-surface-container-high border border-outline px-2 py-0.5 rounded text-on-surface font-mono">SPACE</kbd> to enter
+          </div>
+        </a>
+        <a href="deaf.html" id="deafCard"
+           class="group bg-[#FFFBF2] border-2 border-on-surface paper-shadow p-5 text-left hover:bg-secondary-container transition-colors focus-ring flex flex-col gap-3 rounded-sm torn-edge-bottom">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-on-secondary-container text-2xl">hearing_disabled</span>
+            <span class="font-headline-md text-xl font-bold text-on-surface">Deaf Mode</span>
+          </div>
+          <p class="text-sm text-on-surface-variant font-body-md leading-relaxed">Live ISL translation with SOV grammar reordering.</p>
+          <div class="flex items-center gap-1 text-xs font-bold text-secondary uppercase tracking-widest mt-auto">
+            <span class="material-symbols-outlined text-sm">mouse</span> Click to enter
+          </div>
+        </a>
+      </div>
+
+      <!-- Accessibility auto-detection notice -->
+      <div id="autoRouteNotice" class="hidden relative z-10 w-full max-w-xl bg-primary-fixed border-2 border-on-surface p-4 rounded-sm paper-shadow-sm text-left">
+        <div class="flex items-center gap-2 mb-2">
+          <span class="material-symbols-outlined text-primary">sensors</span>
+          <span class="font-label-lg text-label-lg text-on-surface">Accessibility signal detected</span>
+        </div>
+        <p class="text-sm text-on-surface-variant mb-3" id="autoRouteText">Routing to Blind Mode in 3s…</p>
+        <div class="h-1.5 bg-surface-container-high rounded-full overflow-hidden">
+          <div id="progressBar" class="h-full bg-primary transition-all duration-1000 ease-linear" style="width:100%"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Silent Handshake Section -->
+  <section class="w-full max-w-7xl mx-auto px-margin-mobile md:px-margin-desktop py-lg" id="about">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-gutter items-center">
+      <div class="order-2 md:order-1 bg-surface-container p-8 border-2 border-on-surface torn-edge-bottom paper-shadow">
+        <h2 class="font-headline-md text-headline-md text-on-surface mb-4 flex items-center gap-2">
+          <span class="material-symbols-outlined text-tertiary text-3xl">handshake</span>
+          The 'Silent Handshake'
+        </h2>
+        <p class="font-body-md text-body-md text-on-surface-variant mb-6">
+          Before a lesson begins, the platform performs a <strong>sensory handshake</strong>. CSS media queries and behavioral cues auto-configure the environment — no intrusive questionnaires required.
+        </p>
+        <ul class="space-y-4 font-body-md text-body-md text-on-surface">
+          <li class="flex items-start gap-3">
+            <span class="material-symbols-outlined text-primary mt-1">check_circle</span>
+            <span>Auto-detection of OS high-contrast and reduced-motion flags.</span>
+          </li>
+          <li class="flex items-start gap-3">
+            <span class="material-symbols-outlined text-primary mt-1">check_circle</span>
+            <span>Spacebar → Blind Mode instantly, without menu navigation.</span>
+          </li>
+          <li class="flex items-start gap-3">
+            <span class="material-symbols-outlined text-primary mt-1">check_circle</span>
+            <span>Screen-click or tap → Deaf Mode with live ISL feed.</span>
+          </li>
+        </ul>
+      </div>
+      <div class="order-1 md:order-2 flex justify-center relative">
+        <div class="w-full aspect-square max-w-md relative bg-surface-container-high rounded-full border-2 border-on-surface overflow-hidden flex items-center justify-center p-8">
+          <div class="absolute inset-0 border-[16px] border-primary-container rounded-full opacity-20 animate-pulse"></div>
+          <img class="w-full h-full object-cover rounded-full mix-blend-multiply opacity-80"
+               alt="Abstract paper collage showing a handshake between human and technology"
+               src="https://lh3.googleusercontent.com/aida-public/AB6AXuDEDiBFQuvFGMx2aBHrGzZhP-BXsoz2korKebG5sJAS8lYFA_8kI9n8bJ3s--lwvDFFee4KvVnMzCTmk3fmJBnrfnHTpW8zi-gUa6KSWTbZ-zivxvcvQ7zvpe4v2NnezwMKiOs9YTSyTw1YWkjbb3QV-5APK0Ou8Vu9XDvgn70C5BQUR9I-rde-3RIpuDq_RWLv_wKLyEkbTUiUX4_uJzjUz9WMpnIF7qpAVv0fH-larNpwy1SiwBlVWg"/>
+          <div class="absolute bottom-6 left-0 right-0 text-center font-bold text-primary text-sm tracking-widest uppercase">Bharat Shakti</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Dual Learning Paths -->
+  <section class="w-full max-w-7xl mx-auto px-margin-mobile md:px-margin-desktop py-lg bg-surface-container-low border-y-2 border-on-surface my-lg">
+    <h2 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-center mb-12 text-on-surface">Dual Learning Paths</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+
+      <!-- Blind Mode Card -->
+      <div class="bg-surface border-2 border-on-surface paper-shadow p-6 md:p-8 flex flex-col focus-ring group hover:bg-surface-container transition-colors rounded-sm" tabindex="0">
+        <div class="w-16 h-16 bg-tertiary-container border-2 border-on-surface rounded-full flex items-center justify-center mb-6 torn-edge">
+          <span class="material-symbols-outlined text-on-tertiary-container text-3xl">blind</span>
+        </div>
+        <h3 class="font-headline-md text-headline-md text-on-surface mb-3 border-b-2 border-on-surface pb-2 inline-block self-start">Blind Mode</h3>
+        <p class="font-body-md text-body-md text-on-surface-variant mb-6 flex-grow">
+          Optimized for screen readers and tactile feedback. A streamlined Perkins Braille keyboard emulator with audio-synthesized character feedback and live classroom voice broadcasting.
+        </p>
+        <div class="flex flex-wrap gap-2 mb-6">
+          <span class="bg-surface-container-high border-2 border-outline px-3 py-1 rounded-full font-label-lg text-label-lg text-on-surface-variant text-sm">Perkins Braille Interface</span>
+          <span class="bg-surface-container-high border-2 border-outline px-3 py-1 rounded-full font-label-lg text-label-lg text-on-surface-variant text-sm">WebSocket Sync</span>
+          <span class="bg-surface-container-high border-2 border-outline px-3 py-1 rounded-full font-label-lg text-label-lg text-on-surface-variant text-sm">TTS Feedback</span>
+        </div>
+        <a href="blind.html" class="w-full bg-surface border-2 border-on-surface font-label-lg text-label-lg py-3 mt-auto group-hover:bg-tertiary group-hover:text-on-tertiary transition-colors rounded-sm text-center inline-block">
+          Enter Blind Mode →
+        </a>
+      </div>
+
+      <!-- Deaf Mode Card -->
+      <div class="bg-[#FFFBF2] border-2 border-on-surface paper-shadow p-6 md:p-8 flex flex-col focus-ring group hover:bg-surface-container transition-colors torn-edge-bottom rounded-sm" tabindex="0">
+        <div class="w-16 h-16 bg-secondary-container border-2 border-on-surface rounded-full flex items-center justify-center mb-6 torn-edge">
+          <span class="material-symbols-outlined text-on-secondary-container text-3xl">hearing_disabled</span>
+        </div>
+        <h3 class="font-headline-md text-headline-md text-on-surface mb-3 border-b-2 border-on-surface pb-2 inline-block self-start">Deaf Mode</h3>
+        <p class="font-body-md text-body-md text-on-surface-variant mb-6 flex-grow">
+          A visual-first layout with real-time Text-to-ISL translation. Teacher speech is captured, parsed through NLP into SOV (Subject-Object-Verb) grammar, and rendered as sequential ISL word cards.
+        </p>
+        <div class="flex flex-wrap gap-2 mb-6">
+          <span class="bg-surface-container-high border-2 border-outline px-3 py-1 rounded-full font-label-lg text-label-lg text-on-surface-variant text-sm">Real-time Text-to-ISL</span>
+          <span class="bg-surface-container-high border-2 border-outline px-3 py-1 rounded-full font-label-lg text-label-lg text-on-surface-variant text-sm">ISL Gloss NLP</span>
+          <span class="bg-surface-container-high border-2 border-outline px-3 py-1 rounded-full font-label-lg text-label-lg text-on-surface-variant text-sm">MediaPipe Tracking</span>
+        </div>
+        <a href="deaf.html" class="w-full bg-surface border-2 border-on-surface font-label-lg text-label-lg py-3 mt-auto group-hover:bg-secondary group-hover:text-on-secondary transition-colors rounded-sm text-center inline-block">
+          Enter Deaf Mode →
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Technical Excellence -->
+  <section class="w-full max-w-7xl mx-auto px-margin-mobile md:px-margin-desktop py-lg mb-lg" id="technology">
+    <div class="bg-surface-container border-2 border-on-surface p-8 md:p-12 relative rounded-sm">
+      <div class="absolute -top-3 left-1/2 -translate-x-1/2 w-32 h-6 bg-[#dcdad3] opacity-80 transform -rotate-2 rounded-sm"></div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div class="md:col-span-1 border-r-0 md:border-r-2 border-on-surface pr-0 md:pr-8 border-b-2 md:border-b-0 pb-8 md:pb-0">
+          <h2 class="font-headline-md text-headline-md text-on-surface mb-2">Technical Excellence</h2>
+          <p class="font-label-lg text-label-lg text-primary uppercase tracking-widest mb-4">Bharat Shakti Hackathon</p>
+          <p class="font-body-md text-body-md text-on-surface-variant">
+            Robust, offline-capable architecture. Zero hardware drivers — everything runs in the browser.
+          </p>
+        </div>
+        <div class="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div class="bg-surface p-4 border-2 border-on-surface flex items-start gap-4 rounded-sm">
+            <span class="material-symbols-outlined text-primary text-3xl">sync_alt</span>
+            <div>
+              <h4 class="font-label-lg text-label-lg text-on-surface mb-1">FastAPI / WebSockets</h4>
+              <p class="font-body-md text-body-md text-sm text-on-surface-variant">Sub-50ms broadcast latency across all adaptive student modules.</p>
+            </div>
+          </div>
+          <div class="bg-surface p-4 border-2 border-on-surface flex items-start gap-4 rounded-sm">
+            <span class="material-symbols-outlined text-tertiary text-3xl">memory</span>
+            <div>
+              <h4 class="font-label-lg text-label-lg text-on-surface mb-1">C++ WASM Offline Engine</h4>
+              <p class="font-body-md text-body-md text-sm text-on-surface-variant">Braille core runs locally even when conference Wi-Fi fails.</p>
+            </div>
+          </div>
+          <div class="bg-surface p-4 border-2 border-on-surface flex items-start gap-4 rounded-sm">
+            <span class="material-symbols-outlined text-secondary text-3xl">translate</span>
+            <div>
+              <h4 class="font-label-lg text-label-lg text-on-surface mb-1">ISL Gloss NLP Pipeline</h4>
+              <p class="font-body-md text-body-md text-sm text-on-surface-variant">spaCy reorders English SVO → ISL SOV grammar before translation.</p>
+            </div>
+          </div>
+          <div class="bg-surface p-4 border-2 border-on-surface flex items-start gap-4 rounded-sm">
+            <span class="material-symbols-outlined text-primary text-3xl">sign_language</span>
+            <div>
+              <h4 class="font-label-lg text-label-lg text-on-surface mb-1">MediaPipe Hands JS</h4>
+              <p class="font-body-md text-body-md text-sm text-on-surface-variant">Two-way interaction: student signs are recognized and sent back to teacher.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- Footer -->
+<footer class="w-full mt-lg border-t-2 border-on-surface bg-surface-container-highest">
+  <div class="flex flex-col md:flex-row justify-between items-center w-full px-margin-mobile md:px-margin-desktop py-md max-w-7xl mx-auto gap-6 md:gap-0">
+    <div class="flex items-center gap-2">
+      <img alt="Bharat Shakti Logo" class="h-8 w-8 object-contain rounded" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDD3YIhH3GKawDIW8h2JzTeX6tFkqKFHQySiWF7uNKZxe7trmLqfyT-pZJF9fwB3uMn95dW18_LORTSYaojc2am6kWbNQr3Gu3nRAIuqaM9rcAIudkExbVyHlWxSArAdRH8CuxVFiNcz_A-KQh0nZh-RE2j_mknqpl-qbFMtU_8WBoODVroVqw0-kYSnazkvwVDG_CLz6Ap1U1hf3G7xwg1cmC1BUa5k0LMG-0LGcCG7AEoNnBcgujnFA"/>
+      <span class="font-headline-md text-xl font-bold text-primary">Bharat Shakti</span>
+    </div>
+    <nav aria-label="Footer Navigation" class="flex flex-wrap justify-center gap-6">
+      <a class="font-label-lg text-label-lg text-on-surface-variant hover:text-primary underline transition-all focus-ring rounded-sm" href="https://github.com/AI4Bharat/INCLUDE" target="_blank" rel="noopener">Repositories</a>
+      <a class="font-label-lg text-label-lg text-on-surface-variant hover:text-primary underline transition-all focus-ring rounded-sm" href="bharat_shakti_master_document.md">Project Document</a>
+    </nav>
+    <div class="font-body-md text-body-md text-on-surface text-center md:text-right text-sm">
+      © 2024 Bharat Shakti — PS4 Inclusive Education
+    </div>
+  </div>
+</footer>
+
+<script>
+  /* ── Silent Handshake ─────────────────────────────── */
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const forcedColors  = window.matchMedia('(forced-colors: active)').matches;
+
+  function speak(text) {
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'en-IN';
+    window.speechSynthesis.speak(u);
+  }
+
+  if (reducedMotion || forcedColors) {
+    const notice  = document.getElementById('autoRouteNotice');
+    const bar     = document.getElementById('progressBar');
+    const txt     = document.getElementById('autoRouteText');
+    notice.classList.remove('hidden');
+    speak('Accessibility signal detected. Routing to Blind Mode in 3 seconds.');
+    let s = 3;
+    txt.textContent = `Routing to Blind Mode in ${s}s…`;
+    const iv = setInterval(() => {
+      s--;
+      bar.style.width = `${(s/3)*100}%`;
+      if (s <= 0) { clearInterval(iv); window.location.href = 'blind.html'; }
+      else txt.textContent = `Routing to Blind Mode in ${s}s…`;
+    }, 1000);
+  }
+
+  /* ── Keyboard Shortcut: Spacebar → Blind Mode ─────── */
+  window.addEventListener('keydown', e => {
+    if ((e.key === ' ' || e.code === 'Space') && !['INPUT','TEXTAREA','BUTTON','A'].includes(document.activeElement.tagName)) {
+      e.preventDefault();
+      window.location.href = 'blind.html';
+    }
+  });
+
+  /* ── TTS on first focus ────────────────────────────── */
+  let narrated = false;
+  document.addEventListener('focusin', () => {
+    if (narrated) return;
+    narrated = true;
+    speak('Welcome to Bharat Shakti. Press Spacebar for Blind Mode. Use Tab and Enter to navigate to Deaf Mode.');
+  }, { once: true });
+</script>
+<script src="gradient-bg.js"></script>
+</body>
+</html>
