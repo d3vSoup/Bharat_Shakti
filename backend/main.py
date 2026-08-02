@@ -52,10 +52,12 @@ async def websocket_endpoint(websocket: WebSocket, mode: str):
             
             if message_obj.get("type") == "speech_input":
                 # Broadcast teacher's transcription to all connected student screens
-                print(f"Broadcasting speech input: {message_obj['text']}")
+                lang = message_obj.get("lang", "en")
+                print(f"Broadcasting speech input [{lang}]: {message_obj['text']}")
                 await manager.broadcast({
                     "type": "broadcast",
-                    "text": message_obj["text"]
+                    "text": message_obj["text"],
+                    "lang": lang
                 })
     except WebSocketDisconnect:
         manager.disconnect(websocket)

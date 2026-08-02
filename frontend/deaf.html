@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<meta name="description" content="Bharat Shakti Deaf Mode — Live English-to-ISL translation with real-time speech recognition and classroom sync."/>
+<meta name="description" content="Bharat Shakti Deaf Mode — Live ISL gesture translation from teacher speech, Google Meet/Zoom captions, Hindi & English, with SOV grammar reordering."/>
 <title>Deaf Mode | Bharat Shakti</title>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
@@ -55,10 +55,7 @@
   }
 </script>
 <style>
-  body {
-    background: transparent;
-    font-family: 'Atkinson Hyperlegible Next', sans-serif;
-  }
+  body { background: transparent; font-family: 'Atkinson Hyperlegible Next', sans-serif; }
   .paper-shadow    { box-shadow: 4px 4px 0px 0px #1c1c18; }
   .paper-shadow-sm { box-shadow: 2px 2px 0px 0px #1c1c18; }
   .torn-edge       { clip-path: polygon(0 0, 100% 2%, 98% 100%, 2% 98%); }
@@ -66,11 +63,11 @@
   .focus-ring:focus-within { outline: 4px solid #ffb800; outline-offset: 4px; }
   a:focus-visible, button:focus-visible { outline: 4px solid #ffb800; outline-offset: 4px; }
   .material-symbols-outlined { font-variation-settings:'FILL' 1,'wght' 400; font-size:inherit; vertical-align:middle; }
-  /* Translucent surfaces so gradient shows through */
   header { background: rgba(252,249,242,0.88) !important; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
   footer { background: rgba(229,226,219,0.82) !important; backdrop-filter: blur(8px); }
   .bg-surface  { background: rgba(252,249,242,0.75) !important; backdrop-filter: blur(8px); }
   .bg-\[\#FFFBF2\] { background: rgba(255,251,242,0.78) !important; backdrop-filter: blur(6px); }
+
   /* Wave bars */
   .wave-bar { width:3px; border-radius:99px; animation:wave 1.2s ease infinite; background:currentColor; }
   .wave-bar:nth-child(1){height:6px;animation-delay:0.0s}
@@ -80,10 +77,182 @@
   .wave-bar:nth-child(5){height:20px;animation-delay:0.4s}
   .wave-bar:nth-child(6){height:8px;animation-delay:0.5s}
   @keyframes wave { 0%,100%{transform:scaleY(1)} 50%{transform:scaleY(0.3)} }
-  @keyframes slideInCard { from{opacity:0;transform:scale(0.8) translateY(10px)} to{opacity:1;transform:scale(1) translateY(0)} }
-  .isl-card-anim { animation: slideInCard 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) both; }
+
   @keyframes fadeInItem { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
   .transcript-entry { animation: fadeInItem 0.25s ease both; }
+
+  /* ── ISL Gesture Image ── */
+  #gestureImg {
+    width: 100%;
+    max-width: 320px;
+    height: 220px;
+    object-fit: contain;
+    border-radius: 4px;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+  }
+  #gestureImg.gesture-visible { opacity: 1; }
+  #gestureImg.gesture-fade-out { opacity: 0; }
+
+  /* Gloss Pills */
+  .isl-pill {
+    display: inline-flex;
+    align-items: center;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    padding: 3px 10px;
+    border-radius: 9999px;
+    border: 2px solid #d5c4ab;
+    background: #f1eee7;
+    color: #514532;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+  }
+  .isl-pill.active {
+    border-color: #7c5800;
+    background: #ffb800;
+    color: #271900;
+    transform: scale(1.08);
+    box-shadow: 0 2px 6px rgba(124,88,0,0.25);
+  }
+  .isl-pill.done {
+    background: #e5e2db;
+    color: #837560;
+    text-decoration: line-through;
+    opacity: 0.6;
+  }
+
+  /* Speed slider */
+  #speedSlider {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 6px;
+    border-radius: 3px;
+    background: #d5c4ab;
+    outline: none;
+  }
+  #speedSlider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #7c5800;
+    border: 2px solid #1c1c18;
+    cursor: pointer;
+    box-shadow: 1px 1px 0 #1c1c18;
+  }
+
+  /* Input mode tabs */
+  .mode-tab {
+    flex: 1;
+    padding: 8px 4px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    border: 2px solid #d5c4ab;
+    background: #f6f3ec;
+    color: #514532;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-align: center;
+  }
+  .mode-tab:first-child { border-radius: 4px 0 0 4px; }
+  .mode-tab:last-child  { border-radius: 0 4px 4px 0; }
+  .mode-tab:not(:first-child) { border-left: none; }
+  .mode-tab.active {
+    background: #ffb800;
+    color: #271900;
+    border-color: #7c5800;
+    box-shadow: 0 2px 0 #1c1c18;
+  }
+  .mode-tab:hover:not(.active) { background: #ebe8e1; }
+
+  /* Language toggle */
+  .lang-btn {
+    padding: 4px 10px;
+    font-size: 11px;
+    font-weight: 700;
+    border: 2px solid #d5c4ab;
+    background: #f6f3ec;
+    color: #514532;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    border-radius: 4px;
+  }
+  .lang-btn.active {
+    background: #7c5800;
+    color: #fff;
+    border-color: #1c1c18;
+  }
+  .lang-btn:first-child { border-radius: 4px 0 0 4px; }
+  .lang-btn:last-child  { border-radius: 0 4px 4px 0; border-left: none; }
+
+  /* Fingerspell row */
+  #fingerspellRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    justify-content: center;
+  }
+  .fsp-letter {
+    width: 32px;
+    height: 32px;
+    border: 2px solid #d5c4ab;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 800;
+    background: #f6f3ec;
+    color: #1c1c18;
+    transition: all 0.15s ease;
+  }
+  .fsp-letter.active {
+    background: #ffb800;
+    border-color: #7c5800;
+    color: #271900;
+    transform: scale(1.15);
+    box-shadow: 0 2px 4px rgba(124,88,0,0.3);
+  }
+
+  /* SOV badge */
+  .sov-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    padding: 2px 8px;
+    border-radius: 99px;
+    border: 1.5px solid #afc8f0;
+    background: #bdd6ff;
+    color: #2f486a;
+  }
+
+  /* Paste textarea */
+  #pasteTextarea {
+    width: 100%;
+    font-family: 'Atkinson Hyperlegible Next', sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    resize: vertical;
+    min-height: 80px;
+    border: 2px solid #d5c4ab;
+    border-radius: 4px;
+    padding: 10px 12px;
+    background: #fcf9f2;
+    color: #1c1c18;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  #pasteTextarea:focus { border-color: #7c5800; box-shadow: 0 0 0 3px rgba(255,184,0,0.25); }
+
+  /* Clipboard badge animation */
+  @keyframes clipBlink { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  .clip-watching { animation: clipBlink 1.5s ease infinite; }
 </style>
 </head>
 <body class="text-on-background min-h-screen flex flex-col">
@@ -116,95 +285,181 @@
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
 
     <!-- LEFT: Teacher Dashboard -->
-    <div class="flex flex-col gap-6">
+    <div class="flex flex-col gap-5">
       <div class="bg-surface border-2 border-on-surface paper-shadow p-6">
-        <div class="border-b-2 border-on-surface pb-4 mb-6">
+        <div class="border-b-2 border-on-surface pb-4 mb-5">
           <h1 class="font-headline-md text-2xl font-bold text-on-surface flex items-center gap-2">
             <span class="material-symbols-outlined text-primary text-2xl">record_voice_over</span>
             Teacher Dashboard
           </h1>
-          <p class="text-sm text-on-surface-variant mt-1">Broadcast live speech to all student screens</p>
+          <p class="text-sm text-on-surface-variant mt-1">Broadcast live speech to all student screens in real-time ISL</p>
         </div>
 
-        <!-- Mic button -->
-        <button id="micBtn" aria-label="Start voice transcription" aria-pressed="false"
-                class="w-full flex items-center justify-center gap-3 py-4 border-2 border-on-surface border-b-[3px] rounded-sm font-bold text-lg transition-all hover:brightness-95 active:border-b-0 active:translate-y-[3px] paper-shadow-sm mb-4 bg-primary-container text-on-primary-fixed focus-ring">
-          <span class="material-symbols-outlined text-2xl" id="micIcon">mic</span>
-          <div class="flex items-center gap-2 h-6" id="micBars">
-            <!-- wave bars hidden until recording -->
+        <!-- Language Toggle -->
+        <div class="mb-4">
+          <p class="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-2">Input Language</p>
+          <div class="flex">
+            <button id="langEn" class="lang-btn active" onclick="setLang('en')" aria-pressed="true" aria-label="Switch to English">🇬🇧 English</button>
+            <button id="langHi" class="lang-btn" onclick="setLang('hi')" aria-pressed="false" aria-label="Switch to Hindi">🇮🇳 हिन्दी</button>
           </div>
-          <span id="micLabel">Start Transcribing</span>
-        </button>
+        </div>
 
-        <!-- Interim display -->
-        <div id="interimBar"
-             aria-live="polite"
-             class="min-h-10 bg-surface-container border-2 border-dashed border-outline p-3 rounded-sm text-sm text-on-surface-variant italic mb-5">
-          Speak to see live transcription…
+        <!-- Input Mode Tabs -->
+        <div class="mb-4">
+          <p class="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-2">Input Mode</p>
+          <div class="flex">
+            <button class="mode-tab active" id="tab-mic"       onclick="switchMode('mic')"       aria-selected="true">🎙️ Live Mic</button>
+            <button class="mode-tab"        id="tab-paste"     onclick="switchMode('paste')"     aria-selected="false">📋 Paste Caption</button>
+            <button class="mode-tab"        id="tab-clipboard" onclick="switchMode('clipboard')" aria-selected="false">📎 Auto-Watch</button>
+          </div>
+        </div>
+
+        <!-- Mic Panel -->
+        <div id="panel-mic">
+          <button id="micBtn" aria-label="Start voice transcription" aria-pressed="false"
+                  class="w-full flex items-center justify-center gap-3 py-4 border-2 border-on-surface border-b-[3px] rounded-sm font-bold text-lg transition-all hover:brightness-95 active:border-b-0 active:translate-y-[3px] paper-shadow-sm mb-4 bg-primary-container text-on-primary-fixed focus-ring">
+            <span class="material-symbols-outlined text-2xl" id="micIcon">mic</span>
+            <div class="flex items-center gap-2 h-6" id="micBars"></div>
+            <span id="micLabel">Start Transcribing</span>
+          </button>
+          <div id="interimBar" aria-live="polite"
+               class="min-h-10 bg-surface-container border-2 border-dashed border-outline p-3 rounded-sm text-sm text-on-surface-variant italic mb-1">
+            Speak to see live transcription…
+          </div>
+          <p class="text-xs text-on-surface-variant mb-4">Works with teacher's microphone or shared audio from Zoom/Meet</p>
+        </div>
+
+        <!-- Paste Panel -->
+        <div id="panel-paste" class="hidden">
+          <p class="text-sm text-on-surface-variant mb-2">Paste live captions from Google Meet or Zoom below, then click <strong>Translate</strong>:</p>
+          <textarea id="pasteTextarea" placeholder="Paste captions here…&#10;e.g. &quot;The student reads the book carefully&quot;&#10;or हिन्दी: &quot;छात्र किताब पढ़ता है&quot;" aria-label="Caption paste area"></textarea>
+          <div class="flex gap-2 mt-3">
+            <button id="translateBtn" onclick="translatePasteText()"
+                    class="flex-1 flex items-center justify-center gap-2 py-3 border-2 border-on-surface border-b-[3px] rounded-sm font-bold text-sm bg-primary-container text-on-primary-fixed hover:brightness-95 transition-all active:border-b-0 active:translate-y-[3px] paper-shadow-sm">
+              <span class="material-symbols-outlined text-lg">sign_language</span>
+              Translate to ISL
+            </button>
+            <button onclick="document.getElementById('pasteTextarea').value=''"
+                    class="px-4 py-3 border-2 border-outline rounded-sm text-sm font-bold text-on-surface-variant hover:bg-surface-container-high transition-colors">
+              Clear
+            </button>
+          </div>
+        </div>
+
+        <!-- Clipboard Auto-Watch Panel -->
+        <div id="panel-clipboard" class="hidden">
+          <div class="border-2 border-outline-variant bg-surface-container rounded-sm p-4 mb-3">
+            <p class="text-sm font-bold text-on-surface mb-1 flex items-center gap-2">
+              <span class="material-symbols-outlined text-base text-secondary">info</span>
+              How to use with Google Meet / Zoom
+            </p>
+            <ol class="text-xs text-on-surface-variant space-y-1 list-decimal list-inside">
+              <li>Enable live captions in your Meet/Zoom window</li>
+              <li>Select and <strong>copy</strong> (Ctrl+C) a caption line</li>
+              <li>This panel auto-detects and translates it instantly</li>
+            </ol>
+          </div>
+          <button id="clipWatchBtn" onclick="toggleClipboardWatch()"
+                  class="w-full flex items-center justify-center gap-2 py-3 border-2 border-on-surface border-b-[3px] rounded-sm font-bold text-sm bg-secondary-container text-on-secondary-container hover:brightness-95 transition-all paper-shadow-sm">
+            <span class="material-symbols-outlined text-base" id="clipIcon">content_paste</span>
+            <span id="clipLabel">Start Watching Clipboard</span>
+          </button>
+          <p id="clipStatus" class="text-xs text-on-surface-variant mt-2 text-center hidden">
+            <span class="clip-watching">⏺ Watching clipboard for new captions…</span>
+          </p>
+        </div>
+
+        <!-- Speed Control -->
+        <div class="mt-5 pt-4 border-t-2 border-outline-variant">
+          <div class="flex items-center justify-between mb-2">
+            <p class="text-xs font-bold text-on-surface-variant uppercase tracking-wider">Sign Speed</p>
+            <span id="speedLabel" class="text-xs font-mono font-bold text-on-surface">1.2 s/sign</span>
+          </div>
+          <input type="range" id="speedSlider" min="500" max="2500" step="100" value="1200"
+                 oninput="updateSpeed(this.value)" aria-label="Sign display speed" class="w-full"/>
+          <div class="flex justify-between text-xs text-on-surface-variant mt-1">
+            <span>⚡ Fast</span><span>🐢 Slow</span>
+          </div>
         </div>
 
         <!-- Transcript feed -->
-        <div class="flex items-center justify-between mb-3">
-          <h3 class="font-bold text-on-surface text-sm uppercase tracking-wider flex items-center gap-1.5">
-            <span class="material-symbols-outlined text-secondary text-base">history</span>Transcript Log
-          </h3>
-          <button onclick="clearFeed()" class="text-xs font-bold text-on-surface-variant hover:text-error border border-outline-variant px-2 py-1 rounded-sm hover:border-error transition-colors">Clear</button>
-        </div>
-        <div id="feedBox" aria-live="polite" aria-label="Transcript feed"
-             class="space-y-3 max-h-64 overflow-y-auto pr-1">
-          <p class="text-sm text-on-surface-variant italic p-3 bg-surface-container-low border border-outline-variant rounded-sm">Transcripts will appear here…</p>
+        <div class="mt-5 pt-4 border-t-2 border-outline-variant">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-bold text-on-surface text-sm uppercase tracking-wider flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-secondary text-base">history</span>Transcript Log
+            </h3>
+            <button onclick="clearFeed()" class="text-xs font-bold text-on-surface-variant hover:text-error border border-outline-variant px-2 py-1 rounded-sm hover:border-error transition-colors">Clear</button>
+          </div>
+          <div id="feedBox" aria-live="polite" aria-label="Transcript feed" class="space-y-2 max-h-48 overflow-y-auto pr-1">
+            <p class="text-sm text-on-surface-variant italic p-3 bg-surface-container-low border border-outline-variant rounded-sm">Transcripts will appear here…</p>
+          </div>
         </div>
       </div>
     </div>
 
     <!-- RIGHT: ISL Visualiser -->
-    <div class="flex flex-col gap-6">
+    <div class="flex flex-col gap-5">
       <div class="bg-[#FFFBF2] border-2 border-on-surface paper-shadow p-6 torn-edge-bottom">
-        <div class="border-b-2 border-on-surface pb-4 mb-6 flex items-start justify-between">
+        <div class="border-b-2 border-on-surface pb-4 mb-5 flex items-start justify-between">
           <div>
             <h2 class="font-headline-md text-2xl font-bold text-on-surface flex items-center gap-2">
               <span class="material-symbols-outlined text-secondary text-2xl">sign_language</span>
               ISL Visualiser
             </h2>
-            <p class="text-sm text-on-surface-variant mt-1">English SVO → ISL SOV reordering</p>
+            <div class="flex items-center gap-2 mt-1">
+              <span class="sov-badge"><span class="material-symbols-outlined text-xs">swap_horiz</span> SVO → SOV</span>
+              <span id="langBadge" class="text-xs font-bold px-2 py-0.5 rounded-full border-2 border-outline-variant bg-surface-container text-on-surface-variant">EN</span>
+            </div>
           </div>
           <div class="flex items-center gap-1.5 bg-secondary-container border-2 border-on-surface px-3 py-1 rounded-full paper-shadow-sm">
             <span class="w-2 h-2 bg-secondary rounded-full animate-pulse"></span>
-            <span class="text-xs font-bold text-on-secondary-container uppercase tracking-wider">Live</span>
+            <span class="text-xs font-bold text-on-secondary-container uppercase tracking-wider" id="liveLabel">Live</span>
           </div>
         </div>
 
         <!-- ISL Stage -->
-        <div class="bg-on-surface rounded-sm border-2 border-on-surface p-8 flex flex-col items-center justify-center min-h-56 mb-5 relative overflow-hidden">
-          <!-- subtle warm light beam -->
+        <div class="bg-on-surface rounded-sm border-2 border-on-surface p-5 flex flex-col items-center justify-center min-h-64 mb-4 relative overflow-hidden" id="islStage">
+          <!-- Warm light beam -->
           <div class="absolute inset-0 opacity-10" style="background: radial-gradient(ellipse 80% 60% at 50% 20%, #ffb800 0%, transparent 60%)"></div>
 
+          <!-- Placeholder state -->
           <div id="islPlaceholder" class="flex flex-col items-center gap-3 text-inverse-on-surface opacity-40 relative z-10">
             <span class="material-symbols-outlined text-5xl" style="font-variation-settings:'FILL' 0,'wght' 300">sign_language</span>
-            <span class="text-sm">Waiting for teacher speech…</span>
+            <span class="text-sm">Waiting for speech or caption…</span>
           </div>
 
-          <div id="islCardWrap" class="hidden flex-col items-center gap-5 relative z-10 w-full">
-            <!-- Gloss progress pills -->
-            <div id="glossProgress" class="flex flex-wrap gap-2 justify-center"></div>
-            <!-- Big ISL word card -->
-            <div id="islCard"
-                 class="isl-card-anim bg-primary-container border-2 border-primary text-on-primary-container rounded-sm px-10 py-5 font-extrabold text-5xl tracking-wide paper-shadow">
-              —
+          <!-- Active gesture display -->
+          <div id="islActive" class="hidden flex-col items-center gap-3 relative z-10 w-full">
+            <!-- Gesture image -->
+            <div class="relative">
+              <img id="gestureImg" src="" alt="ISL gesture" class="gesture-visible"/>
+              <!-- Fingerspelling overlay indicator -->
+              <div id="fspIndicator" class="hidden absolute top-1 right-1 bg-tertiary-container border border-on-surface px-2 py-0.5 rounded-full text-xs font-bold text-on-tertiary-container">
+                ✋ Fingerspelling
+              </div>
             </div>
+            <!-- Word label -->
+            <div id="gestureLabel" class="text-inverse-on-surface font-bold text-lg tracking-wide text-center px-2"></div>
           </div>
         </div>
 
+        <!-- Gloss pills (SOV sequence) -->
+        <div id="glossPills" class="flex flex-wrap gap-1.5 min-h-8 mb-3 justify-center"></div>
+
         <!-- Gloss ribbon -->
-        <div id="glossRibbon" class="bg-surface-container border-2 border-on-surface p-3 rounded-sm text-sm font-mono text-on-surface-variant text-center">
+        <div id="glossRibbon" class="bg-surface-container border-2 border-on-surface p-3 rounded-sm text-xs font-mono text-on-surface-variant text-center leading-relaxed">
           ISL Gloss sequence will appear here after speech
         </div>
 
         <!-- Legend -->
-        <div class="mt-5 pt-4 border-t-2 border-outline-variant">
+        <div class="mt-4 pt-4 border-t-2 border-outline-variant space-y-1">
           <p class="text-xs text-on-surface-variant leading-relaxed">
-            <strong class="text-on-surface">How it works:</strong> Teacher speaks in English (Subject-Verb-Object). 
-            The NLP pipeline reorders to ISL grammar (Subject-Object-Verb) and displays each word as a sequential sign card.
+            <strong class="text-on-surface">NLP Pipeline:</strong> Speech → Stopword removal → Rule-based POS tagging → SOV reorder → ISL gesture lookup (150+ words) → Fingerspell fallback
+          </p>
+          <p class="text-xs text-on-surface-variant">
+            <strong class="text-on-surface">Sources:</strong>
+            <a href="https://github.com/satyam9090/Automatic-Indian-Sign-Language-Translator" target="_blank" class="text-secondary underline hover:text-primary">satyam9090/ISL-Translator</a> ·
+            <a href="https://github.com/AI4Bharat/INCLUDE" target="_blank" class="text-secondary underline hover:text-primary">AI4Bharat/INCLUDE</a>
           </p>
         </div>
       </div>
@@ -221,23 +476,113 @@
   </div>
 </footer>
 
-<script>
-  /* ── DOM refs ─────────────────────────────────────── */
-  const micBtn     = document.getElementById('micBtn');
-  const micLabel   = document.getElementById('micLabel');
-  const micBars    = document.getElementById('micBars');
-  const interimBar = document.getElementById('interimBar');
-  const feedBox    = document.getElementById('feedBox');
-  const islPlaceholder = document.getElementById('islPlaceholder');
-  const islCardWrap    = document.getElementById('islCardWrap');
-  const islCard        = document.getElementById('islCard');
-  const glossProgress  = document.getElementById('glossProgress');
-  const glossRibbon    = document.getElementById('glossRibbon');
+<!-- Load ISL engine as ES module -->
+<script type="module">
+  import { processToISL, isHindi, animateGestures } from './isl-engine.js';
 
-  let socket, recognition, isRecording = false;
+  /* ── State ────────────────────────────────────────── */
+  let currentLang = 'en';
+  let currentMode = 'mic';
+  let signSpeedMs = 1200;
+  let activeAnimation = null;
+  let isRecording = false;
+  let clipboardWatching = false;
+  let clipboardTimer = null;
+  let lastClipboardText = '';
+
+  /* ── DOM refs ─────────────────────────────────────── */
+  const micBtn       = document.getElementById('micBtn');
+  const micLabel     = document.getElementById('micLabel');
+  const micBars      = document.getElementById('micBars');
+  const micIcon      = document.getElementById('micIcon');
+  const interimBar   = document.getElementById('interimBar');
+  const feedBox      = document.getElementById('feedBox');
+  const islPlaceholder = document.getElementById('islPlaceholder');
+  const islActive      = document.getElementById('islActive');
+  const gestureImg     = document.getElementById('gestureImg');
+  const gestureLabel   = document.getElementById('gestureLabel');
+  const glossPills     = document.getElementById('glossPills');
+  const glossRibbon    = document.getElementById('glossRibbon');
+  const fspIndicator   = document.getElementById('fspIndicator');
+  const liveLabel      = document.getElementById('liveLabel');
+  const langBadge      = document.getElementById('langBadge');
+  const clipStatus     = document.getElementById('clipStatus');
+  const clipIcon       = document.getElementById('clipIcon');
+  const clipLabel      = document.getElementById('clipLabel');
+
+  /* ── Expose helpers to global scope for onclick attrs ─ */
+  window.setLang = function(lang) {
+    currentLang = lang;
+    document.getElementById('langEn').classList.toggle('active', lang === 'en');
+    document.getElementById('langHi').classList.toggle('active', lang === 'hi');
+    document.getElementById('langEn').setAttribute('aria-pressed', lang === 'en');
+    document.getElementById('langHi').setAttribute('aria-pressed', lang === 'hi');
+    langBadge.textContent = lang === 'hi' ? 'हिं' : 'EN';
+    if (recognition) recognition.lang = lang === 'hi' ? 'hi-IN' : 'en-IN';
+  };
+
+  window.switchMode = function(mode) {
+    currentMode = mode;
+    ['mic','paste','clipboard'].forEach(m => {
+      document.getElementById(`panel-${m}`).classList.toggle('hidden', m !== mode);
+      const tab = document.getElementById(`tab-${m}`);
+      tab.classList.toggle('active', m === mode);
+      tab.setAttribute('aria-selected', m === mode);
+    });
+    if (mode !== 'clipboard' && clipboardWatching) window.toggleClipboardWatch();
+    if (mode !== 'mic' && isRecording) stopRecording();
+  };
+
+  window.updateSpeed = function(val) {
+    signSpeedMs = parseInt(val, 10);
+    document.getElementById('speedLabel').textContent = (signSpeedMs / 1000).toFixed(1) + ' s/sign';
+  };
+
+  window.translatePasteText = function() {
+    const text = document.getElementById('pasteTextarea').value.trim();
+    if (!text) return;
+    const lang = currentLang === 'hi' || isHindi(text) ? 'hi' : 'en';
+    broadcastText(text, lang);
+  };
+
+  window.toggleClipboardWatch = async function() {
+    if (!navigator.clipboard) {
+      alert('Clipboard API not available in this browser. Try Chrome.');
+      return;
+    }
+    clipboardWatching = !clipboardWatching;
+    clipIcon.textContent = clipboardWatching ? 'stop_circle' : 'content_paste';
+    clipLabel.textContent = clipboardWatching ? 'Stop Watching' : 'Start Watching Clipboard';
+    clipStatus.classList.toggle('hidden', !clipboardWatching);
+    document.getElementById('clipWatchBtn').style.background = clipboardWatching ? '#ffdad6' : '';
+    document.getElementById('clipWatchBtn').style.color = clipboardWatching ? '#93000a' : '';
+
+    if (clipboardWatching) {
+      // Request permission first
+      try { await navigator.clipboard.readText(); } catch(e) {}
+      clipboardTimer = setInterval(async () => {
+        try {
+          const text = await navigator.clipboard.readText();
+          if (text && text !== lastClipboardText && text.trim().length > 3) {
+            lastClipboardText = text;
+            const lang = isHindi(text) ? 'hi' : currentLang;
+            broadcastText(text.trim(), lang);
+          }
+        } catch(e) { /* Permission denied silently */ }
+      }, 2000);
+    } else {
+      clearInterval(clipboardTimer);
+    }
+  };
+
+  window.clearFeed = function() {
+    feedBox.innerHTML = '<p class="text-sm text-on-surface-variant italic p-3 bg-surface-container-low border border-outline-variant rounded-sm">Transcripts will appear here…</p>';
+    resetStage();
+  };
 
   /* ── Speech Recognition ──────────────────────────── */
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  let recognition = null;
   if (SR) {
     recognition = new SR();
     recognition.continuous = true;
@@ -252,15 +597,15 @@
       }
       if (interim) {
         interimBar.textContent = interim;
-        interimBar.className = 'min-h-10 bg-primary-fixed border-2 border-primary p-3 rounded-sm text-sm text-on-primary-fixed italic mb-5';
+        interimBar.className = 'min-h-10 bg-primary-fixed border-2 border-primary p-3 rounded-sm text-sm text-on-primary-fixed italic mb-1';
       }
       if (final.trim()) {
         interimBar.textContent = 'Speak to see live transcription…';
-        interimBar.className = 'min-h-10 bg-surface-container border-2 border-dashed border-outline p-3 rounded-sm text-sm text-on-surface-variant italic mb-5';
-        broadcastText(final.trim());
+        interimBar.className = 'min-h-10 bg-surface-container border-2 border-dashed border-outline p-3 rounded-sm text-sm text-on-surface-variant italic mb-1';
+        const lang = isHindi(final) ? 'hi' : currentLang;
+        broadcastText(final.trim(), lang);
       }
     };
-
     recognition.onerror = e => { if (e.error !== 'no-speech') stopRecording(); };
     recognition.onend   = () => { if (isRecording) recognition.start(); };
   } else {
@@ -273,33 +618,35 @@
     isRecording = true;
     micBtn.className = 'w-full flex items-center justify-center gap-3 py-4 border-2 border-on-surface border-b-[3px] rounded-sm font-bold text-lg transition-all active:border-b-0 active:translate-y-[3px] paper-shadow-sm mb-4 bg-error-container text-on-error-container focus-ring';
     micBtn.setAttribute('aria-pressed','true');
-    micLabel.textContent = 'Recording…  Stop';
-    micBars.innerHTML = '<div class="flex items-end gap-1 h-6 text-error">'+
-      '<div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>'+
-      '<div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div></div>';
+    micLabel.textContent = 'Recording… Stop';
+    micIcon.textContent = 'mic';
+    micBars.innerHTML = '<div class="flex items-end gap-1 h-6 text-error"><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div></div>';
   }
 
   function stopRecording() {
-    recognition.stop();
+    if (recognition) recognition.stop();
     isRecording = false;
     micBtn.className = 'w-full flex items-center justify-center gap-3 py-4 border-2 border-on-surface border-b-[3px] rounded-sm font-bold text-lg transition-all hover:brightness-95 active:border-b-0 active:translate-y-[3px] paper-shadow-sm mb-4 bg-primary-container text-on-primary-fixed focus-ring';
     micBtn.setAttribute('aria-pressed','false');
     micLabel.textContent = 'Start Transcribing';
+    micIcon.textContent = 'mic';
     micBars.innerHTML = '';
     interimBar.textContent = 'Speak to see live transcription…';
-    interimBar.className = 'min-h-10 bg-surface-container border-2 border-dashed border-outline p-3 rounded-sm text-sm text-on-surface-variant italic mb-5';
+    interimBar.className = 'min-h-10 bg-surface-container border-2 border-dashed border-outline p-3 rounded-sm text-sm text-on-surface-variant italic mb-1';
   }
 
   micBtn.addEventListener('click', () => isRecording ? stopRecording() : startRecording());
 
-  function broadcastText(text) {
-    if (socket && socket.readyState === WebSocket.OPEN) socket.send(JSON.stringify({ type:'speech_input', text }));
-    addTranscriptEntry(text);
-    renderISL(text);
+  /* ── Core Broadcast & Render ──────────────────────── */
+  function broadcastText(text, lang) {
+    if (socket && socket.readyState === WebSocket.OPEN) {
+      socket.send(JSON.stringify({ type: 'speech_input', text, lang }));
+    }
+    addTranscriptEntry(text, lang);
+    renderISL(text, lang);
   }
 
-  /* ── Feed ────────────────────────────────────────── */
-  function addTranscriptEntry(text) {
+  function addTranscriptEntry(text, lang = 'en') {
     if (feedBox.querySelector('p')) feedBox.innerHTML = '';
     const now = new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
     const div = document.createElement('div');
@@ -307,96 +654,79 @@
     div.innerHTML = `
       <div class="w-7 h-7 bg-secondary-container border border-outline rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold text-on-secondary-container">T</div>
       <div class="flex-1 min-w-0">
+        <div class="flex items-center gap-1.5 mb-0.5">
+          <span class="text-xs font-bold px-1.5 py-0 rounded border border-outline-variant text-on-surface-variant bg-surface-container">${lang === 'hi' ? 'HI' : 'EN'}</span>
+        </div>
         <p class="text-sm text-on-surface leading-relaxed">${text}</p>
         <p class="text-xs text-on-surface-variant mt-0.5 font-mono">${now}</p>
       </div>`;
     feedBox.prepend(div);
   }
 
-  function clearFeed() {
-    feedBox.innerHTML = '<p class="text-sm text-on-surface-variant italic p-3 bg-surface-container-low border border-outline-variant rounded-sm">Transcripts will appear here…</p>';
-    islPlaceholder.classList.remove('hidden');
-    islPlaceholder.classList.add('flex');
-    islCardWrap.classList.add('hidden');
-    islCardWrap.classList.remove('flex');
+  /* ── ISL Render ───────────────────────────────────── */
+  function resetStage() {
+    if (activeAnimation) { activeAnimation.cancel(); activeAnimation = null; }
+    islPlaceholder.classList.remove('hidden'); islPlaceholder.classList.add('flex');
+    islActive.classList.add('hidden'); islActive.classList.remove('flex');
+    glossPills.innerHTML = '';
     glossRibbon.textContent = 'ISL Gloss sequence will appear here after speech';
+    liveLabel.textContent = 'Live';
   }
 
-  /* ── ISL Parser ──────────────────────────────────── */
-  const STOPWORDS = new Set(['is','are','was','were','the','a','an','to','am','of','in','at','on','and','or','but','with','for','do']);
+  function renderISL(text, lang = 'en') {
+    // Stop previous animation
+    if (activeAnimation) { activeAnimation.cancel(); activeAnimation = null; }
 
-  function toISLGloss(text) {
-    const words = text.toLowerCase().replace(/[^a-z\s]/g,'').split(/\s+/).filter(w=>w&&!STOPWORDS.has(w));
-    if (!words.length) return [text.toUpperCase()];
-    if (words.length >= 3) {
-      const [subj, verb, ...rest] = words;
-      return [...rest, subj, verb].map(w=>w.toUpperCase());
+    // Run NLP pipeline
+    const { gloss, gestures } = processToISL(text, lang);
+
+    if (!gloss.length) {
+      resetStage();
+      return;
     }
-    return words.map(w=>w.toUpperCase());
-  }
 
-  let renderTimer = null;
+    // Update gloss ribbon
+    glossRibbon.textContent = `ISL Gloss (SOV): ${gloss.join(' — ')}`;
 
-  function renderISL(text) {
-    if (renderTimer) clearTimeout(renderTimer);
-    const glossWords = toISLGloss(text);
-    glossRibbon.textContent = `ISL Gloss: ${glossWords.join(' — ')}`;
-
-    // Show stage
+    // Show active stage
     islPlaceholder.classList.add('hidden'); islPlaceholder.classList.remove('flex');
-    islCardWrap.classList.remove('hidden'); islCardWrap.classList.add('flex');
+    islActive.classList.remove('hidden'); islActive.classList.add('flex');
 
-    // Build progress pills
-    glossProgress.innerHTML = '';
-    glossWords.forEach((w,i) => {
-      const s = document.createElement('span');
-      s.id = `gw${i}`;
-      s.className = 'text-xs font-bold px-2.5 py-1 rounded-full border-2 border-outline-variant bg-surface-container text-on-surface-variant transition-all';
-      s.textContent = w;
-      glossProgress.appendChild(s);
-    });
+    // Detect if we have fingerspelling (word not in dict)
+    const hasFingerspell = gestures.some(g => g.type === 'letter');
 
-    let idx = 0;
-    function showNext() {
-      if (idx >= glossWords.length) {
-        renderTimer = setTimeout(() => {
-          islPlaceholder.classList.remove('hidden'); islPlaceholder.classList.add('flex');
-          islCardWrap.classList.add('hidden'); islCardWrap.classList.remove('flex');
-          glossRibbon.textContent = 'ISL Gloss sequence will appear here after speech';
-        }, 3500);
-        return;
+    activeAnimation = animateGestures(
+      gestures,
+      gestureImg,
+      gestureLabel,
+      glossPills,
+      signSpeedMs,
+      () => {
+        // Done callback — reset after 3s
+        liveLabel.textContent = 'Done ✓';
+        setTimeout(() => {
+          liveLabel.textContent = 'Live';
+        }, 3000);
+      },
+      () => {
+        // onStart callback
+        fspIndicator.classList.toggle('hidden', !hasFingerspell);
       }
-      if (idx > 0) {
-        const prev = document.getElementById(`gw${idx-1}`);
-        if (prev) prev.className = 'text-xs font-bold px-2.5 py-1 rounded-full border-2 border-outline-variant bg-surface-container-highest text-on-surface-variant line-through transition-all';
-      }
-      const cur = document.getElementById(`gw${idx}`);
-      if (cur) cur.className = 'text-xs font-bold px-2.5 py-1 rounded-full border-2 border-primary bg-primary-container text-on-primary-fixed transition-all';
-
-      // Animate card
-      islCard.style.animation = 'none';
-      void islCard.offsetWidth;
-      islCard.style.animation = '';
-      islCard.className = 'isl-card-anim bg-primary-container border-2 border-on-surface text-on-primary-fixed rounded-sm px-10 py-5 font-extrabold text-5xl tracking-wide paper-shadow';
-      islCard.textContent = glossWords[idx];
-
-      idx++;
-      renderTimer = setTimeout(showNext, 1350);
-    }
-    showNext();
+    );
   }
 
   /* ── WebSocket ───────────────────────────────────── */
+  let socket;
   const wsDot  = document.getElementById('wsDot');
   const wsText = document.getElementById('wsText');
 
   function setWsState(state) {
     const map = {
-      online:     ['bg-primary','Connected'],
-      error:      ['bg-error',  'Disconnected'],
-      connecting: ['bg-outline', 'Connecting…']
+      online:     ['bg-primary',  'Connected'],
+      error:      ['bg-error',    'Disconnected'],
+      connecting: ['bg-outline',  'Connecting…']
     };
-    const [dotCls, label] = map[state]||map.connecting;
+    const [dotCls, label] = map[state] || map.connecting;
     wsDot.className = `w-2 h-2 rounded-full inline-block ${dotCls}`;
     wsText.textContent = label;
   }
@@ -405,8 +735,14 @@
     setWsState('connecting');
     socket = new WebSocket('ws://localhost:8000/ws/student/deaf');
     socket.onopen    = () => setWsState('online');
-    socket.onmessage = e  => { const d=JSON.parse(e.data); if(d.type==='broadcast'&&d.text){addTranscriptEntry(d.text);renderISL(d.text);} };
-    socket.onclose   = () => { setWsState('error'); setTimeout(connectWS,3000); };
+    socket.onmessage = e => {
+      const d = JSON.parse(e.data);
+      if (d.type === 'broadcast' && d.text) {
+        addTranscriptEntry(d.text, d.lang || 'en');
+        renderISL(d.text, d.lang || 'en');
+      }
+    };
+    socket.onclose = () => { setWsState('error'); setTimeout(connectWS, 3000); };
   }
 
   window.addEventListener('load', connectWS);
