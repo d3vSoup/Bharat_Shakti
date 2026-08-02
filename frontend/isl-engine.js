@@ -10,53 +10,234 @@
 
 import { lookupWord, fingerspell, HINDI_TO_ENGLISH } from './isl-dict.js';
 
-// ── Stopwords (English & Hindi romanised) ─────────────────────────────────
-const STOPWORDS_EN = new Set([
-  'is', 'are', 'was', 'were', 'am', 'be', 'been', 'being',
-  'the', 'a', 'an', 'to', 'of', 'in', 'at', 'on', 'for',
-  'and', 'or', 'but', 'with', 'by', 'from', 'about', 'into',
-  'do', 'does', 'did', 'have', 'has', 'had', 'will', 'would',
-  'can', 'could', 'may', 'might', 'shall', 'should', 'this',
-  'that', 'these', 'those', 'it', 'its', 'they', 'them', 'their',
-  'he', 'she', 'we', 'you', 'i', 'me', 'my', 'your', 'our', 'her',
-  'his', 'there', 'here', 'when', 'where', 'what', 'how', 'why',
-  'which', 'who', 'whom', 'also', 'just', 'very', 'so', 'then',
-  'than', 'too', 'up', 'out', 'if', 'as', 'not',
+// ── Contractions expander ─────────────────────────────────────────────────
+// Real ISL interpreters work from full words, not contracted English
+const CONTRACTIONS = {
+  "i'm":      'i am',
+  "i've":     'i have',
+  "i'll":     'i will',
+  "i'd":      'i would',
+  "you're":   'you are',
+  "you've":   'you have',
+  "you'll":   'you will',
+  "you'd":    'you would',
+  "he's":     'he is',
+  "she's":    'she is',
+  "it's":     'it is',
+  "we're":    'we are',
+  "we've":    'we have',
+  "we'll":    'we will',
+  "they're":  'they are',
+  "they've":  'they have',
+  "they'll":  'they will',
+  "don't":    'do not',
+  "doesn't":  'does not',
+  "didn't":   'did not',
+  "won't":    'will not',
+  "wouldn't": 'would not',
+  "can't":    'cannot',
+  "couldn't": 'could not',
+  "shouldn't":'should not',
+  "isn't":    'is not',
+  "aren't":   'are not',
+  "wasn't":   'was not',
+  "weren't":  'were not',
+  "haven't":  'have not',
+  "hasn't":   'has not',
+  "hadn't":   'had not',
+  "there's":  'there is',
+  "that's":   'that is',
+  "what's":   'what is',
+  "let's":    'let us',
+  "who's":    'who is',
+};
+
+function expandContractions(text) {
+  let t = text.toLowerCase();
+  for (const [contraction, expanded] of Object.entries(CONTRACTIONS)) {
+    // word-boundary safe replacement
+    t = t.replace(new RegExp(`\\b${contraction.replace(/'/g, "'?")}\\b`, 'g'), expanded);
+  }
+  return t;
+}
+
+// ── Filler words (never meaningful in ISL) ───────────────────────────────
+// Real interpreters drop these completely — they carry no semantic weight in ISL
+const FILLERS = new Set([
+  'um', 'uh', 'er', 'ah', 'oh', 'hmm', 'well', 'like', 'else',
+  'anyway', 'basically', 'literally', 'actually', 'really', 'very',
+  'quite', 'rather', 'somewhat', 'maybe', 'perhaps', 'probably',
+  'kind', 'sort', 'mean', 'guess', 'suppose',
 ]);
 
-// ── Lightweight rule-based POS tagger ─────────────────────────────────────
-// Inspired by the NLP approach in satyam9090/Automatic-Indian-Sign-Language-Translator
-const VERB_SUFFIXES    = ['ing', 'ed', 'en', 'ify', 'ise', 'ize', 'ate'];
-const VERB_ROOTS       = new Set([
+// ── Stopwords (grammatical words with no ISL sign equivalent) ───────────
+// NOTE: 'not', 'no', pronouns (i, you, he, me etc.) are KEPT — they have ISL equivalents
+const STOPWORDS_EN = new Set([
+  // Articles
+  'the', 'a', 'an',
+  // Copulas (to be) — ISL omits these
+  'is', 'are', 'was', 'were', 'am', 'be', 'been', 'being',
+  // Aux verbs (do/have/will) — stripped; negation handled separately
+  'do', 'does', 'did', 'have', 'has', 'had', 'will', 'would',
+  'can', 'could', 'may', 'might', 'shall', 'should',
+  // Prepositions (mostly)
+  'to', 'of', 'in', 'at', 'on', 'for', 'with', 'by', 'from', 'about',
+  'into', 'through', 'during', 'before', 'after', 'above', 'below',
+  'between', 'among', 'upon',
+  // Conjunctions
+  'and', 'or', 'but', 'so', 'yet', 'nor', 'although', 'though',
+  'because', 'since', 'while', 'if', 'unless', 'until',
+  // Determiners / demonstratives
+  'this', 'that', 'these', 'those', 'its', 'their',
+  // Adverbs with no ISL sign
+  'then', 'than', 'too', 'also', 'just', 'only', 'even',
+  'already', 'still', 'yet', 'again', 'never',
+]);
+
+// ── ISL Pronoun map ────────────────────────────────────────────────────────────────
+// ISL pronouns are pointing gestures, but we display them as ME/YOU/HE/SHE/WE
+const PRONOUN_MAP = {
+  'i': 'ME', 'me': 'ME', 'my': 'MY', 'myself': 'ME',
+  'you': 'YOU', 'your': 'YOUR', 'yourself': 'YOU',
+  'he': 'HE', 'him': 'HIM', 'his': 'HIS',
+  'she': 'SHE', 'her': 'HER',
+  'we': 'WE', 'us': 'US', 'our': 'OUR',
+  'they': 'THEY', 'them': 'THEM',
+  'it': 'IT',
+};
+
+// ── Time markers (always go FIRST in ISL sentence) ─────────────────────────
+const TIME_WORDS = new Set([
+  'today', 'tomorrow', 'yesterday', 'morning', 'afternoon', 'evening',
+  'night', 'now', 'soon', 'later', 'always', 'sometimes', 'often',
+  'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday',
+  'january', 'february', 'march', 'april', 'may', 'june',
+  'july', 'august', 'september', 'october', 'november', 'december',
+  'week', 'month', 'year', 'hour', 'minute', 'second', 'daily',
+]);
+
+// ── WH-question words (go to END in ISL) ─────────────────────────────────
+const WH_WORDS = new Set(['what', 'who', 'where', 'when', 'why', 'how', 'which', 'whom']);
+
+// ── Negation words ───────────────────────────────────────────────────────────────
+const NEGATION_WORDS = new Set(['not', 'no', 'never', 'cannot', 'neither', 'nor']);
+
+// ── Lightweight rule-based POS tagger ────────────────────────────────────────
+const VERB_SUFFIXES = ['ing', 'ed', 'en', 'ify', 'ise', 'ize', 'ate'];
+const VERB_ROOTS = new Set([
   'read', 'write', 'learn', 'study', 'understand', 'know', 'think',
   'answer', 'ask', 'tell', 'explain', 'listen', 'see', 'look', 'remember',
   'forget', 'repeat', 'complete', 'finish', 'speak', 'say', 'come', 'go',
   'sit', 'stand', 'walk', 'run', 'give', 'take', 'want', 'like', 'love',
   'eat', 'drink', 'work', 'play', 'help', 'stop', 'open', 'close', 'use',
-  'show', 'make', 'do', 'solve', 'draw', 'check', 'mark', 'count',
+  'show', 'make', 'solve', 'draw', 'check', 'mark', 'count', 'bring',
+  'call', 'try', 'feel', 'get', 'put', 'set', 'let', 'keep', 'seem',
+  'become', 'leave', 'turn', 'start', 'begin', 'end', 'happen', 'follow',
 ]);
-const ADJ_SUFFIXES     = ['ful', 'less', 'ous', 'ive', 'ic', 'al', 'ent', 'ant', 'able', 'ible'];
-const ADJ_WORDS        = new Set([
+const ADJ_SUFFIXES = ['ful', 'less', 'ous', 'ive', 'ic', 'al', 'ent', 'ant', 'able', 'ible'];
+const ADJ_WORDS = new Set([
   'good', 'bad', 'big', 'small', 'new', 'old', 'fast', 'slow',
   'correct', 'wrong', 'easy', 'difficult', 'important', 'happy', 'sad',
-  'angry', 'afraid', 'same', 'different', 'more', 'less',
+  'angry', 'afraid', 'same', 'different', 'more', 'less', 'scared',
+  'confused', 'tired', 'sick', 'healthy', 'hot', 'cold', 'warm', 'dry',
+  'wet', 'loud', 'quiet', 'long', 'short', 'tall', 'young', 'beautiful',
+  'ugly', 'famous', 'cheap', 'expensive', 'light', 'heavy', 'wide', 'narrow',
+  'blind', 'deaf', 'fine', 'sorry', 'ready', 'late', 'early',
 ]);
 
 /**
  * Guess part-of-speech for a single word.
  * @param {string} word — lowercase
- * @returns {'NOUN'|'VERB'|'ADJ'|'UNK'}
+ * @returns {'NOUN'|'VERB'|'ADJ'|'TIME'|'WH'|'NEG'|'PRONOUN'|'UNK'}
  */
 function posTag(word) {
-  if (VERB_ROOTS.has(word)) return 'VERB';
-  if (ADJ_WORDS.has(word)) return 'ADJ';
+  if (TIME_WORDS.has(word))    return 'TIME';
+  if (WH_WORDS.has(word))      return 'WH';
+  if (NEGATION_WORDS.has(word)) return 'NEG';
+  if (PRONOUN_MAP[word])       return 'PRONOUN';
+  if (VERB_ROOTS.has(word))    return 'VERB';
+  if (ADJ_WORDS.has(word))     return 'ADJ';
   for (const sfx of VERB_SUFFIXES) {
     if (word.length > sfx.length + 2 && word.endsWith(sfx)) return 'VERB';
   }
   for (const sfx of ADJ_SUFFIXES) {
     if (word.length > sfx.length + 2 && word.endsWith(sfx)) return 'ADJ';
   }
-  return 'NOUN'; // default assumption for remaining content words
+  return 'NOUN';
+}
+
+// ── SOV Reordering — ISL Grammar Engine ──────────────────────────────────────
+/**
+ * Convert English SVO text to ISL SOV gloss sequence.
+ *
+ * Real ISL grammar rules applied:
+ *  1. Expand contractions (don't → do not, I'm → I am)
+ *  2. Remove fillers (um, well, else, literally, actually...)
+ *  3. Map pronouns to ISL forms (I→ME, you→YOU, he→HE)
+ *  4. Strip pure stopwords (articles, copulas, aux verbs, prepositions)
+ *  5. Reorder: TIME first → PRONOUN/NOUN/ADJ (topic) → VERB → NEG last
+ *  6. WH-question words moved to END (ISL puts WHAT/WHO/WHERE at end)
+ *  7. NOT/NEVER/NO always last (ISL negation rule)
+ *
+ * @param {string} text — normalised English text
+ * @returns {string[]} — ISL gloss words, uppercase
+ */
+export function toISLGloss(text) {
+  // Step 1: Expand contractions
+  let normalised = expandContractions(text);
+
+  // Step 2: Lowercase, remove punctuation (keep apostrophes handled already)
+  normalised = normalised.toLowerCase().replace(/[^a-z\s]/g, ' ').trim();
+  if (!normalised) return [];
+
+  // Step 3: Tokenise
+  const rawTokens = normalised.split(/\s+/).filter(w => w.length > 0);
+
+  // Step 4: Strip fillers and stopwords, apply pronoun map
+  const tokens = [];
+  for (const w of rawTokens) {
+    if (FILLERS.has(w)) continue;          // drop fillers (else, well, um...)
+    if (STOPWORDS_EN.has(w)) continue;     // drop grammatical stopwords
+    // Pronouns: map to ISL form
+    if (PRONOUN_MAP[w]) {
+      tokens.push({ word: PRONOUN_MAP[w].toLowerCase(), pos: 'PRONOUN', original: w });
+      continue;
+    }
+    tokens.push({ word: w, pos: posTag(w), original: w });
+  }
+
+  if (!tokens.length) return [text.toUpperCase()];
+
+  // Step 5: Split into ISL positional buckets
+  const timeBucket     = tokens.filter(t => t.pos === 'TIME');    // TIME: sentence start
+  const pronounBucket  = tokens.filter(t => t.pos === 'PRONOUN'); // Pronouns: after time
+  const nounBucket     = tokens.filter(t => t.pos === 'NOUN');    // Nouns: topic
+  const adjBucket      = tokens.filter(t => t.pos === 'ADJ');     // Adjectives: predicate
+  const verbBucket     = tokens.filter(t => t.pos === 'VERB');    // Verbs: end of clause
+  const negBucket      = tokens.filter(t => t.pos === 'NEG');     // Negation: VERY last
+  const whBucket       = tokens.filter(t => t.pos === 'WH');      // WH words: very last
+  const unkBucket      = tokens.filter(t => t.pos === 'UNK');
+
+  // Step 6: ISL sentence order:
+  //   TIME → PRONOUN → NOUN → ADJ → UNK → VERB → WH → NEG
+  //   Example: "I don't know what to do tomorrow"
+  //   Old: DONT IM KNOW WHAT DO TOMORROW
+  //   New: TOMORROW ME KNOW WHAT NOT  (time first, negation last, WH before NEG)
+  const ordered = [
+    ...timeBucket,
+    ...pronounBucket,
+    ...nounBucket,
+    ...adjBucket,
+    ...unkBucket,
+    ...verbBucket,
+    ...whBucket,    // WH-question words come near end
+    ...negBucket,   // NOT / NEVER / NO always absolutely last
+  ];
+
+  // Step 7: Deduplicate adjacent identical words (can happen from contraction expansion)
+  const deduped = ordered.filter((t, i) => i === 0 || t.word !== ordered[i-1].word);
+
+  return deduped.map(t => t.word.toUpperCase());
 }
 
 // ── Hindi detection ────────────────────────────────────────────────────────
@@ -92,47 +273,6 @@ export function transliterateHindi(text) {
   });
 
   return result.trim();
-}
-
-// ── SOV Reordering (core NLP logic) ───────────────────────────────────────
-/**
- * Convert English SVO text to ISL SOV gloss sequence.
- *
- * Algorithm (based on AI4Bharat INCLUDE & satyam9090 pipeline):
- * 1. Lowercase, remove punctuation
- * 2. Split & filter stopwords
- * 3. POS-tag each remaining word
- * 4. Reorder: NOUN/ADJ tokens first, VERB tokens last (ISL SOV grammar)
- * 5. Return gloss array (uppercase strings)
- *
- * @param {string} text — normalised English text
- * @returns {string[]} — ISL gloss words, uppercase
- */
-export function toISLGloss(text) {
-  // Step 1: Normalise
-  const clean = text.toLowerCase().replace(/[^a-z\s'-]/g, '').trim();
-  if (!clean) return [];
-
-  // Step 2: Tokenise & filter stopwords
-  const tokens = clean.split(/\s+/)
-    .map(w => w.replace(/['-]/g, ''))    // strip apostrophes/hyphens
-    .filter(w => w.length > 1 && !STOPWORDS_EN.has(w));
-
-  if (!tokens.length) return [text.toUpperCase()];
-
-  // Step 3: POS tag
-  const tagged = tokens.map(w => ({ word: w, pos: posTag(w) }));
-
-  // Step 4: SOV reorder — NPs (NOUN+ADJ) first, VPs (VERB) last
-  const nouns = tagged.filter(t => t.pos === 'NOUN' || t.pos === 'ADJ');
-  const verbs = tagged.filter(t => t.pos === 'VERB');
-  const unknown = tagged.filter(t => t.pos === 'UNK');
-
-  // ISL SOV: Subject, Object, then Verb
-  const ordered = [...nouns, ...unknown, ...verbs];
-
-  // Step 5: Uppercase for gloss notation
-  return ordered.map(t => t.word.toUpperCase());
 }
 
 // ── Multi-word GIF mapping (phrase → GIF key) ─────────────────────────────
