@@ -8,8 +8,6 @@
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:ital,wght@0,200..800;1,200..800&display=swap" rel="stylesheet"/>
-<!-- jsPDF for client-side PDF export -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script id="tailwind-config">
   tailwind.config = {
     darkMode: "class",
@@ -173,7 +171,7 @@
   }
   .mode-tab:hover:not(.active) { background: #ebe8e1; }
 
-  /* Language toggle — supports 2 or 3 buttons */
+  /* Language toggle */
   .lang-btn {
     padding: 4px 10px;
     font-size: 11px;
@@ -190,9 +188,8 @@
     color: #fff;
     border-color: #1c1c18;
   }
-  .lang-btn:first-child              { border-radius: 4px 0 0 4px; }
-  .lang-btn:last-child               { border-radius: 0 4px 4px 0; border-left: none; }
-  .lang-btn:not(:first-child):not(:last-child) { border-radius: 0; border-left: none; }
+  .lang-btn:first-child { border-radius: 4px 0 0 4px; }
+  .lang-btn:last-child  { border-radius: 0 4px 4px 0; border-left: none; }
 
   /* Fingerspell row */
   #fingerspellRow {
@@ -259,6 +256,22 @@
   /* Clipboard badge animation */
   @keyframes clipBlink { 0%,100%{opacity:1} 50%{opacity:0.4} }
   .clip-watching { animation: clipBlink 1.5s ease infinite; }
+
+  /* ── Print / PDF export ── */
+  @media print {
+    header, footer, #panel-mic, #panel-paste, #panel-clipboard,
+    #speedSlider, .mode-tab, .lang-btn, #translateBtn,
+    #islStage, #glossPills, #glossRibbon, .mt-4.pt-4.border-t-2,
+    button, .paper-shadow, nav { display: none !important; }
+    body { background: white !important; font-family: Georgia, serif; color: #000; }
+    #printHeader { display: block !important; }
+    #feedBox { max-height: none !important; overflow: visible !important; }
+    .transcript-entry { break-inside: avoid; border: 1px solid #ccc !important;
+      border-radius: 4px; padding: 8px 12px; margin-bottom: 8px; background: white !important; }
+    main { padding: 0 !important; }
+    .grid { display: block !important; }
+  }
+  #printHeader { display: none; }
 </style>
 </head>
 <body class="text-on-background min-h-screen flex flex-col">
@@ -305,17 +318,11 @@
         <div class="mb-4">
           <p class="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-2">Input Language</p>
           <div class="flex">
-            <button id="langEn"   class="lang-btn active" onclick="setLang('en')"   aria-pressed="true"  aria-label="Switch to English">🇬🇧 English</button>
-            <button id="langHi"   class="lang-btn"        onclick="setLang('hi')"   aria-pressed="false" aria-label="Switch to Hindi">🇮🇳 हिन्दी</button>
-            <button id="langAuto" class="lang-btn"        onclick="setLang('auto')" aria-pressed="false" aria-label="Auto-detect language">🔄 Auto</button>
+            <button id="langAuto" class="lang-btn active" onclick="setLang('auto')" aria-pressed="true" aria-label="Auto-detect language">🔄 Auto</button>
+            <button id="langEn"   class="lang-btn" onclick="setLang('en')" aria-pressed="false" aria-label="Switch to English">🇬🇧 English</button>
+            <button id="langHi"   class="lang-btn" onclick="setLang('hi')" aria-pressed="false" aria-label="Switch to Hindi">🇮🇳 हिन्दी</button>
           </div>
-          <!-- Live translation toggle -->
-          <div class="flex items-center gap-2 mt-2">
-            <label class="flex items-center gap-1.5 cursor-pointer select-none">
-              <input type="checkbox" id="translateToggle" checked class="w-3 h-3 accent-primary" onchange="updateTranslateToggle(this.checked)"/>
-              <span class="text-xs text-on-surface-variant">Show EN↔HI translation in log</span>
-            </label>
-          </div>
+          <p class="text-xs text-on-surface-variant mt-1">🔄 Auto detects Hindi &amp; English automatically</p>
         </div>
 
         <!-- Input Mode Tabs -->
@@ -396,21 +403,27 @@
           </div>
         </div>
 
-        <!-- Transcript / Dialogue feed -->
+        <!-- Dialogue Log -->
         <div class="mt-5 pt-4 border-t-2 border-outline-variant">
+          <!-- PDF print header (hidden on screen) -->
+          <div id="printHeader" class="mb-4">
+            <h1 style="font-size:20px;font-weight:bold;margin-bottom:4px">Bharat Shakti — Classroom Dialogue Transcript</h1>
+            <p style="font-size:12px;color:#555">Printed on: <span id="printDate"></span></p>
+            <hr style="margin:8px 0"/>
+          </div>
           <div class="flex items-center justify-between mb-3">
             <h3 class="font-bold text-on-surface text-sm uppercase tracking-wider flex items-center gap-1.5">
               <span class="material-symbols-outlined text-secondary text-base">forum</span>Dialogue Log
             </h3>
-            <div class="flex gap-2">
-              <button onclick="exportDialoguePDF()" id="pdfBtn" class="text-xs font-bold text-on-surface border-2 border-outline-variant px-2 py-1 rounded-sm hover:bg-primary-container hover:border-primary transition-colors flex items-center gap-1">
-                <span class="material-symbols-outlined text-sm">picture_as_pdf</span>Export PDF
+            <div class="flex gap-1.5">
+              <button onclick="exportPDF()" class="text-xs font-bold text-secondary border border-secondary px-2 py-1 rounded-sm hover:bg-secondary-container transition-colors flex items-center gap-1">
+                <span class="material-symbols-outlined" style="font-size:13px">picture_as_pdf</span>Export PDF
               </button>
               <button onclick="clearFeed()" class="text-xs font-bold text-on-surface-variant hover:text-error border border-outline-variant px-2 py-1 rounded-sm hover:border-error transition-colors">Clear</button>
             </div>
           </div>
-          <div id="feedBox" aria-live="polite" aria-label="Dialogue log" class="space-y-2 max-h-80 overflow-y-auto pr-1">
-            <p class="text-sm text-on-surface-variant italic p-3 bg-surface-container-low border border-outline-variant rounded-sm">Dialogue entries will appear here…</p>
+          <div id="feedBox" aria-live="polite" aria-label="Dialogue log" class="space-y-2 max-h-48 overflow-y-auto pr-1">
+            <p class="text-sm text-on-surface-variant italic p-3 bg-surface-container-low border border-outline-variant rounded-sm">Dialogue will appear here…</p>
           </div>
         </div>
       </div>
@@ -500,24 +513,24 @@
   import { processToISL, isHindi, animateGestures } from './isl-engine.js';
 
   /* ── State ────────────────────────────────────────── */
-  let currentLang      = 'en';
-  let currentMode      = 'mic';
-  let signSpeedMs      = 1200;
-  let activeAnimation  = null;
-  let isRecording      = false;
+  let currentLang = 'auto'; // 'auto' | 'en' | 'hi'
+  let currentMode = 'mic';
+  let signSpeedMs = 1200;
+  let activeAnimation = null;
+  let isRecording = false;
   let clipboardWatching = false;
-  let clipboardTimer   = null;
+  let clipboardTimer = null;
   let lastClipboardText = '';
-  let showTranslation  = true;
-  let dialogues        = [];   // rich dialogue store
+  let renderDebounce = null;   // debounce timer for ISL render
+  let isAnimating = false;     // true while a full gesture sequence plays
 
   /* ── DOM refs ─────────────────────────────────────── */
-  const micBtn         = document.getElementById('micBtn');
-  const micLabel       = document.getElementById('micLabel');
-  const micBars        = document.getElementById('micBars');
-  const micIcon        = document.getElementById('micIcon');
-  const interimBar     = document.getElementById('interimBar');
-  const feedBox        = document.getElementById('feedBox');
+  const micBtn       = document.getElementById('micBtn');
+  const micLabel     = document.getElementById('micLabel');
+  const micBars      = document.getElementById('micBars');
+  const micIcon      = document.getElementById('micIcon');
+  const interimBar   = document.getElementById('interimBar');
+  const feedBox      = document.getElementById('feedBox');
   const islPlaceholder = document.getElementById('islPlaceholder');
   const islActive      = document.getElementById('islActive');
   const gestureImg     = document.getElementById('gestureImg');
@@ -531,45 +544,21 @@
   const clipIcon       = document.getElementById('clipIcon');
   const clipLabel      = document.getElementById('clipLabel');
 
-  /* ── Translation API (MyMemory — free, no key) ─────── */
-  async function translateText(text, fromLang, toLang) {
-    if (!showTranslation) return null;
-    if (!text || text.trim().length < 2) return null;
-    try {
-      const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text.slice(0, 500))}&langpair=${fromLang}|${toLang}`;
-      const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
-      if (!res.ok) return null;
-      const data = await res.json();
-      const translated = data?.responseData?.translatedText;
-      // MyMemory sometimes returns an error string
-      if (!translated || translated.toLowerCase().includes('mymemory warning')) return null;
-      return translated;
-    } catch {
-      return null; // silently fail, don't break ISL flow
-    }
-  }
-
-  /* ── Language Management ──────────────────────────── */
+  /* ── Expose helpers to global scope for onclick attrs ─ */
   window.setLang = function(lang) {
     currentLang = lang;
-    ['en','hi','auto'].forEach(l => {
-      const btn = document.getElementById(`lang${l.charAt(0).toUpperCase() + l.slice(1)}`);
-      if (btn) {
-        btn.classList.toggle('active', l === lang);
-        btn.setAttribute('aria-pressed', l === lang);
-      }
+    ['auto','en','hi'].forEach(l => {
+      const btn = document.getElementById('lang' + l.charAt(0).toUpperCase() + l.slice(1));
+      if (btn) { btn.classList.toggle('active', l === lang); btn.setAttribute('aria-pressed', l === lang); }
     });
-    if (lang === 'hi')   langBadge.textContent = 'हिं';
-    else if (lang === 'auto') langBadge.textContent = '🔄';
-    else                 langBadge.textContent = 'EN';
-
+    // Set Speech API language:
+    // 'auto' → empty string triggers browser bilingual detection (Hindi + English)
+    // 'hi'   → hi-IN for Devanagari mic input
+    // 'en'   → en-IN
     if (recognition) {
-      recognition.lang = lang === 'hi' ? 'hi-IN' : 'en-IN';
+      recognition.lang = lang === 'hi' ? 'hi-IN' : lang === 'en' ? 'en-IN' : '';
     }
-  };
-
-  window.updateTranslateToggle = function(checked) {
-    showTranslation = checked;
+    langBadge.textContent = lang === 'hi' ? 'हिं' : lang === 'auto' ? 'AUTO' : 'EN';
   };
 
   window.switchMode = function(mode) {
@@ -592,9 +581,7 @@
   window.translatePasteText = function() {
     const text = document.getElementById('pasteTextarea').value.trim();
     if (!text) return;
-    const lang = currentLang === 'hi' || isHindi(text) ? 'hi'
-               : currentLang === 'auto' ? (isHindi(text) ? 'hi' : 'en')
-               : currentLang;
+    const lang = currentLang === 'hi' || isHindi(text) ? 'hi' : 'en';
     broadcastText(text, lang);
   };
 
@@ -604,23 +591,24 @@
       return;
     }
     clipboardWatching = !clipboardWatching;
-    clipIcon.textContent  = clipboardWatching ? 'stop_circle' : 'content_paste';
+    clipIcon.textContent = clipboardWatching ? 'stop_circle' : 'content_paste';
     clipLabel.textContent = clipboardWatching ? 'Stop Watching' : 'Start Watching Clipboard';
     clipStatus.classList.toggle('hidden', !clipboardWatching);
     document.getElementById('clipWatchBtn').style.background = clipboardWatching ? '#ffdad6' : '';
-    document.getElementById('clipWatchBtn').style.color      = clipboardWatching ? '#93000a' : '';
+    document.getElementById('clipWatchBtn').style.color = clipboardWatching ? '#93000a' : '';
 
     if (clipboardWatching) {
+      // Request permission first
       try { await navigator.clipboard.readText(); } catch(e) {}
       clipboardTimer = setInterval(async () => {
         try {
           const text = await navigator.clipboard.readText();
           if (text && text !== lastClipboardText && text.trim().length > 3) {
             lastClipboardText = text;
-            const detectedLang = isHindi(text) ? 'hi' : currentLang === 'auto' ? 'en' : currentLang;
-            broadcastText(text.trim(), detectedLang);
+            const lang = isHindi(text) ? 'hi' : currentLang;
+            broadcastText(text.trim(), lang);
           }
-        } catch(e) {}
+        } catch(e) { /* Permission denied silently */ }
       }, 2000);
     } else {
       clearInterval(clipboardTimer);
@@ -628,106 +616,8 @@
   };
 
   window.clearFeed = function() {
-    feedBox.innerHTML = '<p class="text-sm text-on-surface-variant italic p-3 bg-surface-container-low border border-outline-variant rounded-sm">Dialogue entries will appear here…</p>';
-    dialogues = [];
+    feedBox.innerHTML = '<p class="text-sm text-on-surface-variant italic p-3 bg-surface-container-low border border-outline-variant rounded-sm">Transcripts will appear here…</p>';
     resetStage();
-  };
-
-  /* ── PDF Export ────────────────────────────────────── */
-  window.exportDialoguePDF = function() {
-    if (!dialogues.length) {
-      alert('No dialogue entries to export yet. Start speaking or paste some text first.');
-      return;
-    }
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
-    const pageW = doc.internal.pageSize.getWidth();
-    const margin = 15;
-    const usableW = pageW - margin * 2;
-    let y = 20;
-
-    // ── Header ──
-    doc.setFillColor(255, 184, 0);
-    doc.rect(0, 0, pageW, 14, 'F');
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(11);
-    doc.setTextColor(39, 25, 0);
-    doc.text('BHARAT SHAKTI — Classroom Dialogue Export', margin, 9);
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
-    doc.setTextColor(100, 80, 0);
-    const dateStr = new Date().toLocaleString('en-IN', { dateStyle: 'long', timeStyle: 'short' });
-    doc.text(dateStr, pageW - margin, 9, { align: 'right' });
-
-    y = 22;
-    doc.setFontSize(8);
-    doc.setTextColor(130, 100, 60);
-    doc.text(`Total utterances: ${dialogues.length}`, margin, y);
-    y += 6;
-
-    // ── Entries (reverse so oldest first) ──
-    const entries = [...dialogues].reverse();
-    for (const d of entries) {
-      if (y > 270) { doc.addPage(); y = 20; }
-
-      // Row header
-      doc.setFillColor(241, 238, 231);
-      doc.roundedRect(margin, y, usableW, 7, 1, 1, 'F');
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(8);
-      doc.setTextColor(39, 25, 0);
-      const langLabel = d.lang === 'hi' ? '[HI]' : '[EN]';
-      doc.text(`${d.timestamp}  ${langLabel}  ${d.speaker}`, margin + 2, y + 4.5);
-      y += 9;
-
-      // Original text
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(9);
-      doc.setTextColor(28, 28, 24);
-      const origLines = doc.splitTextToSize(d.original, usableW - 10);
-      doc.text(origLines, margin + 4, y);
-      y += origLines.length * 4.5;
-
-      // Translation (if present)
-      if (d.translation) {
-        doc.setFont('helvetica', 'italic');
-        doc.setFontSize(8.5);
-        doc.setTextColor(71, 96, 131);
-        const transLabel = d.lang === 'hi' ? '↕ EN: ' : '↕ HI: ';
-        const transLines = doc.splitTextToSize(transLabel + d.translation, usableW - 10);
-        doc.text(transLines, margin + 4, y);
-        y += transLines.length * 4.2;
-      }
-
-      // ISL Gloss
-      if (d.gloss && d.gloss.length) {
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(7.5);
-        doc.setTextColor(124, 88, 0);
-        const glossStr = 'ISL: ' + d.gloss.join(' — ');
-        const glossLines = doc.splitTextToSize(glossStr, usableW - 10);
-        doc.text(glossLines, margin + 4, y);
-        y += glossLines.length * 4 + 3;
-      }
-
-      // Divider
-      doc.setDrawColor(213, 196, 171);
-      doc.line(margin, y, pageW - margin, y);
-      y += 4;
-    }
-
-    // Footer
-    const totalPages = doc.internal.getNumberOfPages();
-    for (let p = 1; p <= totalPages; p++) {
-      doc.setPage(p);
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(7);
-      doc.setTextColor(150, 130, 100);
-      doc.text(`Bharat Shakti · Inclusive Education AI · Page ${p} of ${totalPages}`, pageW / 2, 290, { align: 'center' });
-    }
-
-    const filename = `Bharat_Shakti_Dialogue_${new Date().toISOString().slice(0,10)}.pdf`;
-    doc.save(filename);
   };
 
   /* ── Speech Recognition ──────────────────────────── */
@@ -735,9 +625,10 @@
   let recognition = null;
   if (SR) {
     recognition = new SR();
-    recognition.continuous    = true;
+    recognition.continuous = true;
     recognition.interimResults = true;
-    recognition.lang           = 'en-IN';
+    // Auto mode: empty lang = browser auto-detects Hindi vs English
+    recognition.lang = '';
 
     recognition.onresult = e => {
       let interim = '', final = '';
@@ -745,25 +636,32 @@
         const t = e.results[i][0].transcript;
         if (e.results[i].isFinal) final += t; else interim += t;
       }
+
+      // Interim: update live bar only — NO gesture animation (prevents glitch)
       if (interim) {
-        interimBar.textContent = interim;
+        interimBar.textContent = '🎙 ' + interim;
         interimBar.className = 'min-h-10 bg-primary-fixed border-2 border-primary p-3 rounded-sm text-sm text-on-primary-fixed italic mb-1';
       }
+
+      // Final result: debounce 400ms to batch rapid sentences, then render
       if (final.trim()) {
         interimBar.textContent = 'Speak to see live transcription…';
-        interimBar.className   = 'min-h-10 bg-surface-container border-2 border-dashed border-outline p-3 rounded-sm text-sm text-on-surface-variant italic mb-1';
-        // Auto language detection
-        let detectedLang;
-        if (currentLang === 'auto') {
-          detectedLang = isHindi(final) ? 'hi' : 'en';
-          // Restart recognition in detected language for next utterance
-          if (recognition.lang !== (detectedLang === 'hi' ? 'hi-IN' : 'en-IN')) {
-            recognition.lang = detectedLang === 'hi' ? 'hi-IN' : 'en-IN';
-          }
-        } else {
-          detectedLang = currentLang === 'hi' || isHindi(final) ? 'hi' : 'en';
-        }
-        broadcastText(final.trim(), detectedLang);
+        interimBar.className = 'min-h-10 bg-surface-container border-2 border-dashed border-outline p-3 rounded-sm text-sm text-on-surface-variant italic mb-1';
+
+        // Language detection: check Devanagari chars first, then toggle state
+        const detectedLang = isHindi(final) ? 'hi'
+                           : currentLang === 'auto' ? 'en'
+                           : currentLang;
+
+        // Update badge to show detected language
+        langBadge.textContent = detectedLang === 'hi' ? 'हिं' : currentLang === 'auto' ? 'AUTO' : 'EN';
+
+        // Debounce: wait 400ms after last final before rendering ISL
+        // This prevents repeated rapid results from restarting animation
+        clearTimeout(renderDebounce);
+        renderDebounce = setTimeout(() => {
+          broadcastText(final.trim(), detectedLang);
+        }, 400);
       }
     };
     recognition.onerror = e => { if (e.error !== 'no-speech') stopRecording(); };
@@ -774,14 +672,13 @@
   }
 
   function startRecording() {
-    if (recognition) recognition.lang = currentLang === 'hi' ? 'hi-IN' : 'en-IN';
     recognition.start();
     isRecording = true;
     micBtn.className = 'w-full flex items-center justify-center gap-3 py-4 border-2 border-on-surface border-b-[3px] rounded-sm font-bold text-lg transition-all active:border-b-0 active:translate-y-[3px] paper-shadow-sm mb-4 bg-error-container text-on-error-container focus-ring';
     micBtn.setAttribute('aria-pressed','true');
     micLabel.textContent = 'Recording… Stop';
-    micIcon.textContent  = 'mic';
-    micBars.innerHTML    = '<div class="flex items-end gap-1 h-6 text-error"><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div></div>';
+    micIcon.textContent = 'mic';
+    micBars.innerHTML = '<div class="flex items-end gap-1 h-6 text-error"><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div></div>';
   }
 
   function stopRecording() {
@@ -790,94 +687,45 @@
     micBtn.className = 'w-full flex items-center justify-center gap-3 py-4 border-2 border-on-surface border-b-[3px] rounded-sm font-bold text-lg transition-all hover:brightness-95 active:border-b-0 active:translate-y-[3px] paper-shadow-sm mb-4 bg-primary-container text-on-primary-fixed focus-ring';
     micBtn.setAttribute('aria-pressed','false');
     micLabel.textContent = 'Start Transcribing';
-    micIcon.textContent  = 'mic';
-    micBars.innerHTML    = '';
+    micIcon.textContent = 'mic';
+    micBars.innerHTML = '';
     interimBar.textContent = 'Speak to see live transcription…';
-    interimBar.className   = 'min-h-10 bg-surface-container border-2 border-dashed border-outline p-3 rounded-sm text-sm text-on-surface-variant italic mb-1';
+    interimBar.className = 'min-h-10 bg-surface-container border-2 border-dashed border-outline p-3 rounded-sm text-sm text-on-surface-variant italic mb-1';
   }
 
   micBtn.addEventListener('click', () => isRecording ? stopRecording() : startRecording());
 
   /* ── Core Broadcast & Render ──────────────────────── */
-  async function broadcastText(text, lang) {
+  function broadcastText(text, lang) {
     if (socket && socket.readyState === WebSocket.OPEN) {
       socket.send(JSON.stringify({ type: 'speech_input', text, lang }));
     }
-
-    // Run ISL pipeline immediately
-    const { gloss } = processToISL(text, lang);
+    addTranscriptEntry(text, lang);
     renderISL(text, lang);
-
-    // Fetch translation async (doesn't block ISL animation)
-    const oppositeLang = lang === 'hi' ? 'en' : 'hi';
-    const translation  = await translateText(text, lang, oppositeLang);
-
-    // Add to dialogue store + UI
-    addDialogueEntry(text, lang, translation, gloss);
   }
 
-  /* ── Dialogue Store & UI ──────────────────────────── */
-  function addDialogueEntry(text, lang, translation, gloss) {
-    const now = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    const entry = {
-      id:          dialogues.length + 1,
-      timestamp:   now,
-      speaker:     'Teacher',
-      lang:        lang,
-      original:    text,
-      translation: translation || null,
-      gloss:       gloss || []
-    };
-    dialogues.push(entry);
+  /* ── Export dialogue log as PDF ──────────────────── */
+  window.exportPDF = function() {
+    document.getElementById('printDate').textContent =
+      new Date().toLocaleString('en-IN', { dateStyle: 'long', timeStyle: 'short' });
+    window.print();
+  };
 
-    // Clear placeholder
+  function addTranscriptEntry(text, lang = 'en') {
     if (feedBox.querySelector('p')) feedBox.innerHTML = '';
-
-    const langEmoji = lang === 'hi' ? '🇮🇳' : '🇬🇧';
-    const oppLabel  = lang === 'hi' ? 'EN' : 'HI';
-    const glossStr  = gloss && gloss.length ? gloss.join(' — ') : '';
-
+    const now = new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
     const div = document.createElement('div');
-    div.className = 'transcript-entry bg-surface-container-low border-2 border-outline-variant rounded-sm overflow-hidden';
-    div.setAttribute('data-dialogue-id', entry.id);
+    div.className = 'transcript-entry flex gap-3 items-start p-3 bg-surface-container-low border-2 border-outline-variant rounded-sm';
     div.innerHTML = `
-      <div class="flex gap-3 items-start p-3">
-        <div class="w-7 h-7 bg-secondary-container border border-outline rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold text-on-secondary-container">T</div>
-        <div class="flex-1 min-w-0">
-          <div class="flex items-center gap-1.5 mb-1 flex-wrap">
-            <span class="text-xs font-bold px-1.5 py-0 rounded border border-outline-variant text-on-surface-variant bg-surface-container">${langEmoji} ${lang.toUpperCase()}</span>
-            <span class="text-xs text-on-surface-variant font-mono">${now}</span>
-          </div>
-          <p class="text-sm text-on-surface leading-relaxed font-medium">${text}</p>
-          ${translation ? `<p class="text-xs text-secondary mt-1 flex items-start gap-1"><span class="font-bold shrink-0">↕ ${oppLabel}:</span> <span class="italic">${translation}</span></p>` : '<p class="text-xs text-outline-variant mt-1 italic" id="trans-' + entry.id + '">Fetching translation…</p>'}
-          ${glossStr ? `<div class="mt-1.5 flex flex-wrap gap-1"><span class="text-xs text-primary font-bold mr-1">ISL:</span>${gloss.map(g => `<span class="text-xs font-bold px-1.5 py-0.5 bg-primary-container text-on-primary-fixed rounded border border-primary-fixed-dim">${g}</span>`).join('')}</div>` : ''}
+      <div class="w-7 h-7 bg-secondary-container border border-outline rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold text-on-secondary-container">T</div>
+      <div class="flex-1 min-w-0">
+        <div class="flex items-center gap-1.5 mb-0.5">
+          <span class="text-xs font-bold px-1.5 py-0 rounded border border-outline-variant text-on-surface-variant bg-surface-container">${lang === 'hi' ? 'HI' : 'EN'}</span>
         </div>
+        <p class="text-sm text-on-surface leading-relaxed">${text}</p>
+        <p class="text-xs text-on-surface-variant mt-0.5 font-mono">${now}</p>
       </div>`;
     feedBox.prepend(div);
-
-    // If translation wasn't ready yet, update when it arrives
-    if (!translation && showTranslation) {
-      const transEl = div.querySelector(`#trans-${entry.id}`);
-      if (transEl) {
-        // Translation still pending — update the DOM element when done
-        // (already fired async above, this is just the "pending" placeholder)
-        // We check after broadcastText returns — polling approach:
-        const check = setInterval(() => {
-          const stored = dialogues.find(d => d.id === entry.id);
-          if (stored && stored.translation) {
-            transEl.outerHTML = `<p class="text-xs text-secondary mt-1 flex items-start gap-1"><span class="font-bold shrink-0">↕ ${oppLabel}:</span> <span class="italic">${stored.translation}</span></p>`;
-            clearInterval(check);
-          }
-        }, 500);
-        setTimeout(() => clearInterval(check), 8000); // give up after 8s
-      }
-    }
-  }
-
-  // Back-fill translation onto entry after async resolve
-  async function resolveTranslation(entryId, lang) {
-    // Called after translation completes — update stored entry
-    // The DOM update is handled by the polling in addDialogueEntry
   }
 
   /* ── ISL Render ───────────────────────────────────── */
@@ -891,24 +739,53 @@
   }
 
   function renderISL(text, lang = 'en') {
-    if (activeAnimation) { activeAnimation.cancel(); activeAnimation = null; }
+    // Run NLP pipeline
     const { gloss, gestures } = processToISL(text, lang);
-    if (!gloss.length) { resetStage(); return; }
 
+    if (!gloss.length) {
+      resetStage();
+      return;
+    }
+
+    // Anti-glitch: if a GIF is currently animating, don't interrupt it.
+    // Only cancel if we have a new *non-letter* gesture (word-level sign)
+    const newHasWord = gestures.some(g => g.type === 'gif' || g.type === 'still');
+    if (isAnimating && !newHasWord) {
+      // Queue: just update gloss ribbon but don't restart finger-spell mid-sign
+      glossRibbon.textContent = `ISL Gloss (SOV): ${gloss.join(' — ')}`;
+      return;
+    }
+
+    // Stop previous animation only when we have a new substantive gesture
+    if (activeAnimation) { activeAnimation.cancel(); activeAnimation = null; }
+    isAnimating = false;
+
+    // Update gloss ribbon
     glossRibbon.textContent = `ISL Gloss (SOV): ${gloss.join(' — ')}`;
+
+    // Show active stage
     islPlaceholder.classList.add('hidden'); islPlaceholder.classList.remove('flex');
     islActive.classList.remove('hidden'); islActive.classList.add('flex');
 
     const hasGif = gestures.some(g => g.type === 'gif');
     gestureImg.style.objectFit = hasGif ? 'contain' : 'cover';
 
+    isAnimating = true;
     activeAnimation = animateGestures(
-      gestures, gestureImg, gestureLabel, glossPills, signSpeedMs,
+      gestures,
+      gestureImg,
+      gestureLabel,
+      glossPills,
+      signSpeedMs,
       () => {
+        // Done callback
+        isAnimating = false;
+        activeAnimation = null;
         liveLabel.textContent = 'Done ✓';
         setTimeout(() => { liveLabel.textContent = 'Live'; }, 3000);
       },
       (curGesture) => {
+        // Toggle badge dynamically per active gesture
         const isLetter      = curGesture?.type === 'letter';
         const isHindiLetter = curGesture?.type === 'hindi_letter';
         const showBadge     = isLetter || isHindiLetter;
@@ -935,7 +812,7 @@
       connecting: ['bg-outline',  'Connecting…']
     };
     const [dotCls, label] = map[state] || map.connecting;
-    wsDot.className  = `w-2 h-2 rounded-full inline-block ${dotCls}`;
+    wsDot.className = `w-2 h-2 rounded-full inline-block ${dotCls}`;
     wsText.textContent = label;
   }
 
@@ -946,7 +823,8 @@
     socket.onmessage = e => {
       const d = JSON.parse(e.data);
       if (d.type === 'broadcast' && d.text) {
-        broadcastText(d.text, d.lang || 'en');
+        addTranscriptEntry(d.text, d.lang || 'en');
+        renderISL(d.text, d.lang || 'en');
       }
     };
     socket.onclose = () => { setWsState('error'); setTimeout(connectWS, 3000); };
