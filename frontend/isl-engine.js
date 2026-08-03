@@ -278,30 +278,49 @@ export function transliterateHindi(text) {
 // ── Multi-word GIF mapping (phrase → GIF key) ─────────────────────────────
 // Allows full phrases spoken by teacher to match GIF files directly
 const PHRASE_TO_GIF_KEY = {
-  'sit down':      'SIT',
-  'stand up':      'STAND',
-  'good morning':  'MORNING',
-  'good afternoon':'AFTERNOON',
-  'good question': 'QUESTION',
-  'i am fine':     'FINE',
-  'i am sorry':    'SORRY',
-  'i am thinking': 'THINK',
-  'i am tired':    'TIRED',
-  'shall i help you': 'HELP',
-  'nice to meet you': 'MEET',
-  'dont worry':    'WORRY',
-  'do not worry':  'WORRY',
-  'what is your name': 'NAME',
-  'what is the problem': 'PROBLEM',
-  'open the door': 'OPEN',
-  'you are wrong': 'WRONG',
-  'sign language': 'SIGN',
-  'did you finish homework': 'HOMEWORK',
-  'lets go for lunch': 'LUNCH',
-  'be careful':    'CAREFUL',
-  'take care':     'CARE',
-  "what's up":     'WHATSUP',
-  'whats up':      'WHATSUP',
+  'sit down':               'SIT',
+  'stand up':               'STAND',
+  'good morning':           'MORNING',
+  'good afternoon':         'AFTERNOON',
+  'good question':          'QUESTION',
+  'i am fine':              'FINE',
+  'i am sorry':             'SORRY',
+  'i am thinking':          'THINK',
+  'i am tired':             'TIRED',
+  'shall i help you':       'HELP',
+  'nice to meet you':       'MEET',
+  'dont worry':             'WORRY',
+  'do not worry':           'WORRY',
+  'what is your name':      'NAME',
+  'what is the problem':    'PROBLEM',
+  'open the door':          'OPEN',
+  'you are wrong':          'WRONG',
+  'sign language':          'SIGN',
+  'did you finish homework':'HOMEWORK',
+  'lets go for lunch':      'LUNCH',
+  'be careful':             'CAREFUL',
+  'take care':              'CARE',
+  "what's up":              'WHATSUP',
+  'whats up':               'WHATSUP',
+  'i love to shop':         'LOVE',
+  'i love':                 'LOVE',
+  'are you angry':          'ANGRY',
+  'are you hungry':         'HUNGRY',
+  'do you have money':      'MONEY',
+  'do you watch tv':        'TV',
+  'flower is beautiful':    'FLOWER',
+  'i am a clerk':           'CLERK',
+  'i go to a theatre':      'THEATRE',
+  'i like pink colour':     'PINK',
+  'please call me later':   'CALL',
+  'police station':         'POLICE',
+  'post office':            'POST',
+  'there was traffic jam':  'TRAFFIC',
+  'where is the bathroom':  'BATHROOM',
+  'where is the police station': 'POLICE',
+  'what is todays date':    'DATE',
+  "what is today's date":   'DATE',
+  'what is your father do': 'FATHER',
 };
 
 // ── Full pipeline ──────────────────────────────────────────────────────────
@@ -476,7 +495,7 @@ export function animateGestures(gestures, imgEl, labelEl, pillContainer, duratio
       imgEl.classList.add('gesture-visible');
     }
 
-    if (idx === 0 && onStart) onStart();
+    if (onStart) onStart(g);
 
     // Check if this is last letter of a fingerspelled word — complete pill then
     const nextIsSameWord = gestures[idx + 1]?.word === g.word;

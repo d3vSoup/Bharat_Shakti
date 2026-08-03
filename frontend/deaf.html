@@ -715,9 +715,11 @@
           liveLabel.textContent = 'Live';
         }, 3000);
       },
-      () => {
-        // onStart callback
-        fspIndicator.classList.toggle('hidden', !hasFingerspell);
+      (curGesture) => {
+        // Toggle Fingerspelling badge dynamically per active gesture
+        const isFsp = curGesture?.type === 'letter';
+        fspIndicator.classList.toggle('hidden', !isFsp);
+        gestureImg.style.objectFit = (curGesture?.type === 'gif' || curGesture?.type === 'still') ? 'contain' : 'cover';
       }
     );
   }

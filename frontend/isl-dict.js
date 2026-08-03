@@ -2,52 +2,112 @@
  * isl-dict.js — Bharat Shakti ISL Gesture Dictionary
  *
  * Image sources (priority order):
- *  1. Animated GIFs  — satyam9090/Automatic-Indian-Sign-Language-Translator
- *     words/*.gif → animated ISL phrase GIFs
+ *  1. Animated GIFs  — satyam9090/Automatic-Indian-Sign-Language-Translator (86 real GIFs)
+ *     words/*.gif → real animated ISL gesture GIFs
  *  2. Vivit still frames — Kaggle kaushikyh/indian-sign-language-words-with-landmarks
  *     words_vivit/*.jpg → landmark-overlaid ISL word frames (224×224, from MOV)
- *  3. SVG hand renderer (isl-hands.js) — zero-network fallback
+ *  3. Fallback → null (triggers clean A-Z fingerspelling with 384x384 real hand photos)
  *
- * Fingerspelling: letters/*.jpg — real ISL hand photos (satyam9090, 1440×1080)
+ * NOTE: Cartoon SVG hands have been removed completely per design requirements.
  */
-
-import { getISLSvgUrl } from './isl-hands.js';
 
 const LETTERS_PATH     = '/isl_gestures/letters/';
 const WORDS_PATH       = '/isl_gestures/words/';
 const WORDS_VIVIT_PATH = '/isl_gestures/words_vivit/';
 
-// ── Alphabet fingerspelling — real photos ──────────────────────────────────
+// ── Alphabet fingerspelling — 384×384 real high-contrast photos ────────────
 export const LETTER_PATHS = {};
 'abcdefghijklmnopqrstuvwxyz'.split('').forEach(ch => {
   LETTER_PATHS[ch.toUpperCase()] = `${LETTERS_PATH}${ch}.jpg`;
 });
 
-// ── Word GIFs (animated, phrase-level) ────────────────────────────────────
+// ── Word GIFs (86 animated ISL gesture GIFs from satyam9090) ──────────────
 export const WORD_GIFS = {
-  'HELLO':      'hello.gif',
-  'HI':         'hello.gif',
+  'ADDRESS':    'address.gif',
+  'AHMEDABAD':  'ahemdabad.gif',
+  'ALL':        'all.gif',
+  'ANGRY':      'are you angry.gif',
+  'HUNGRY':     'are you hungry.gif',
+  'ASSAM':      'assam.gif',
+  'AUGUST':     'august.gif',
+  'BANANA':     'banana.gif',
+  'BANARAS':    'banaras.gif',
+  'BANGALORE':  'banglore.gif',
+  'CAREFUL':    'be careful.gif',
+  'BRIDGE':     'bridge.gif',
+  'CAT':        'cat.gif',
+  'CHRISTMAS':  'christmas.gif',
+  'CHURCH':     'church.gif',
+  'CLINIC':     'cilinic.gif',
+  'DASARA':     'dasara.gif',
+  'DECEMBER':   'december.gif',
+  'HOMEWORK':   'did you finish homework.gif',
+  'MONEY':      'do you have money.gif',
+  'DRINK':      'do you want something to drink.gif',
+  'TV':         'do you watch TV.gif',
+  'WORRY':      'dont worry.gif',
+  'FLOWER':     'flower is beautiful.gif',
+  'AFTERNOON':  'good afternoon.gif',
   'MORNING':    'good morning.gif',
   'QUESTION':   'good question.gif',
-  'SIT':        'sit down.gif',
-  'STAND':      'stand up.gif',
+  'GRAPES':     'grapes.gif',
+  'HELLO':      'hello.gif',
+  'HI':         'hello.gif',
+  'HINDU':      'hindu.gif',
+  'HYDERABAD':  'hyderabad.gif',
+  'CLERK':      'i am a clerk.gif',
   'FINE':       'i am fine.gif',
   'SORRY':      'i am sorry.gif',
   'THINK':      'i am thinking.gif',
   'TIRED':      'i am tired.gif',
-  'HELP':       'shall I help you.gif',
-  'MEET':       'nice to meet you.gif',
-  'WORRY':      'dont worry.gif',
-  'NAME':       'what is your name.gif',
-  'PROBLEM':    'what is the problem.gif',
-  'OPEN':       'open the door.gif',
-  'WRONG':      'you are wrong.gif',
-  'SIGN':       'sign language interpreter.gif',
-  'HOMEWORK':   'did you finish homework.gif',
+  'THEATRE':    'i go to a theatre.gif',
+  'FORGOT':     'i had to say something but I forgot.gif',
+  'PINK':       'i like pink colour.gif',
+  'LOVE':       'i love to shop.gif',
+  'JOB':        'job.gif',
+  'JULY':       'july.gif',
+  'JUNE':       'june.gif',
+  'KARNATAKA':  'karnataka.gif',
+  'KERALA':     'kerala.gif',
+  'KRISHNA':    'krishna.gif',
   'LUNCH':      'lets go for lunch.gif',
-  'CAREFUL':    'be careful.gif',
+  'MANGO':      'mango.gif',
+  'MAY':        'may.gif',
+  'MILE':       'mile.gif',
+  'MUMBAI':     'mumbai.gif',
+  'NAGPUR':     'nagpur.gif',
+  'MEET':       'nice to meet you.gif',
+  'OPEN':       'open the door.gif',
+  'PAKISTAN':   'pakistan.gif',
+  'CALL':       'please call me later.gif',
+  'POLICE':     'police station.gif',
+  'POST':       'post office.gif',
+  'PUNE':       'pune.gif',
+  'PUNJAB':     'punjab.gif',
+  'SATURDAY':   'saturday.gif',
+  'HELP':       'shall I help you.gif',
+  'TOGETHER':   'shall we go together tommorow.gif',
+  'SHOP':       'shop.gif',
+  'SIGN':       'sign language interpreter.gif',
+  'SIT':        'sit down.gif',
+  'STAND':      'stand up.gif',
   'CARE':       'take care.gif',
+  'TEMPLE':     'temple.gif',
+  'TRAFFIC':    'there was traffic jam.gif',
+  'THURSDAY':   'thursday.gif',
+  'TOILET':     'toilet.gif',
+  'BATHROOM':   'where is the bathroom.gif',
+  'TOMATO':     'tomato.gif',
+  'TUESDAY':    'tuesday.gif',
+  'USA':        'usa.gif',
+  'VILLAGE':    'village.gif',
+  'WEDNESDAY':  'wednesday.gif',
+  'PROBLEM':    'what is the problem.gif',
+  'DATE':       'what is today\'s date.gif',
+  'FATHER':     'what is your father do.gif',
+  'NAME':       'what is your name.gif',
   'WHATSUP':    'whats up.gif',
+  'WRONG':      'you are wrong.gif',
 };
 
 // ── Vivit word still images (76 words, landmark-overlaid, 224×224) ─────────
@@ -131,34 +191,6 @@ export const WORD_STILLS = {
   'YOUNG':      'young.jpg',
 };
 
-// ── All known gloss words (SVG fallback for remaining words) ───────────────
-export const KNOWN_WORDS = new Set([
-  // Greetings
-  'hello','bye','goodbye','good','morning','afternoon','evening','night',
-  'please','thankyou','thank','sorry','welcome','yes','no','okay','ok','help','stop',
-  // People
-  'teacher','student','students','person','boy','girl','man','woman',
-  'mother','father','friend','family','doctor',
-  // Education verbs
-  'read','reading','reads','write','writing','writes','learn','learning',
-  'study','studying','understand','understood','know','think','answer',
-  'question','ask','tell','explain','listen','see','look','remember',
-  'forget','repeat','correct','wrong','complete','finish',
-  // Objects
-  'book','books','pen','pencil','paper','class','school','college',
-  'exam','test','homework','board','table','chair','bag','computer',
-  'phone','water','food',
-  // Numbers
-  'one','two','three','four','five',
-  // Adjectives & concepts
-  'big','small','new','old','fast','slow','open','close','home','name',
-  'time','today','tomorrow','yesterday','now','again','more','less',
-  'same','different','important','difficult','easy','india','language',
-  'sign','deaf','hear','speak','work','play','eat','drink','go','come',
-  'sit','stand','walk','run','give','take','want','like','love',
-  'happy','sad','angry','afraid',
-]);
-
 // ── Hindi → English word map for classroom speech ─────────────────────────
 export const HINDI_TO_ENGLISH = {
   // People
@@ -203,10 +235,10 @@ export const HINDI_TO_ENGLISH = {
 
 /**
  * Look up a word. Priority:
- *  1. Animated GIF (phrase-level, most expressive)
- *  2. Vivit still image (landmark-overlaid real ISL frame)
- *  3. SVG hand renderer (fallback for remaining known words)
- *  Returns null → caller will fingerspell letter by letter.
+ *  1. Animated GIF (86 real ISL gesture GIFs)
+ *  2. Vivit still image (76 landmark-overlaid real ISL frames)
+ *  Returns null → caller will fingerspell letter by letter using real A-Z hand photos.
+ *  (No cartoon SVG drawings used).
  */
 export function lookupWord(word) {
   const key = word.toUpperCase();
@@ -223,16 +255,12 @@ export function lookupWord(word) {
     return { url: `${WORDS_VIVIT_PATH}${stillFile}`, type: 'still', label: key };
   }
 
-  // 3. SVG hand illustration fallback
-  if (KNOWN_WORDS.has(key.toLowerCase())) {
-    return { url: getISLSvgUrl(key, 'word'), type: 'word', label: key };
-  }
-
+  // 3. Fallback: null -> fingerspell with real hand photos
   return null;
 }
 
 /**
- * Fingerspelling — uses real ISL hand photos (1440×1080 JPGs).
+ * Fingerspelling — uses 384x384 real ISL hand photos (A-Z).
  */
 export function fingerspell(word) {
   return word.toUpperCase().split('').map(ch => {
