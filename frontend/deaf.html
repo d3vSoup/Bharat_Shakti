@@ -552,11 +552,18 @@
       if (btn) { btn.classList.toggle('active', l === lang); btn.setAttribute('aria-pressed', l === lang); }
     });
     // Set Speech API language:
-    // 'auto' → empty string triggers browser bilingual detection (Hindi + English)
-    // 'hi'   → hi-IN for Devanagari mic input
-    // 'en'   → en-IN
+    // 'auto' → 'hi-IN' allows Chrome to transcribe both Devanagari Hindi & English
+    // 'hi'   → 'hi-IN' for Devanagari mic input
+    // 'en'   → 'en-IN'
     if (recognition) {
-      recognition.lang = lang === 'hi' ? 'hi-IN' : lang === 'en' ? 'en-IN' : '';
+      const targetLang = lang === 'hi' ? 'hi-IN' : lang === 'en' ? 'en-IN' : 'hi-IN';
+      if (recognition.lang !== targetLang) {
+        recognition.lang = targetLang;
+        if (isRecording) {
+          recognition.stop();
+          setTimeout(() => { if (isRecording) recognition.start(); }, 150);
+        }
+      }
     }
     langBadge.textContent = lang === 'hi' ? 'हिं' : lang === 'auto' ? 'AUTO' : 'EN';
   };
@@ -627,8 +634,8 @@
     recognition = new SR();
     recognition.continuous = true;
     recognition.interimResults = true;
-    // Auto mode: empty lang = browser auto-detects Hindi vs English
-    recognition.lang = '';
+    // Auto mode: 'hi-IN' allows Chrome to capture both Hindi and English speech
+    recognition.lang = 'hi-IN';
 
     recognition.onresult = e => {
       let interim = '', final = '';

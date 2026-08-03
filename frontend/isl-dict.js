@@ -265,6 +265,19 @@ export const HINDI_TO_ENGLISH = {
   'भारत': 'india',      'भाषा': 'language',     'काम': 'work',
   'पढ़ेंगे': 'read',     'लिखेंगे': 'write',     'करेंगे': 'do',
   'देखेंगे': 'see',      'सुनेंगे': 'listen',    'बताएंगे': 'tell',
+
+  // Hinglish (Romanised Hindi spoken transcription)
+  'namaste': 'hello',    'namaskar': 'hello',   'shikshak': 'teacher',
+  'adhyapak': 'teacher', 'chhatra': 'student',  'kitab': 'book',
+  'pustak': 'book',      'padhna': 'read',      'padhte': 'reads',
+  'padhenge': 'read',    'likhna': 'write',     'likhenge': 'write',
+  'aaj': 'today',        'kal': 'tomorrow',     'haan': 'yes',
+  'nahin': 'no',         'nahi': 'no',          'dhanyawad': 'thankyou',
+  'shukriya': 'thankyou','madad': 'help',       'kaise': 'how',
+  'kya': 'what',         'kahan': 'where',      'kab': 'when',
+  'kyun': 'why',         'kaun': 'who',         'achha': 'good',
+  'achhi': 'good',       'bohot': 'very',       'samajh': 'understand',
+  'pyaar': 'love',       'bharat': 'india',     'shakti': 'power',
 };
 
 /**
