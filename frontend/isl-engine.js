@@ -186,8 +186,8 @@ export function toISLGloss(text) {
   // Step 1: Expand contractions
   let normalised = expandContractions(text);
 
-  // Step 2: Lowercase, remove punctuation (keep apostrophes handled already)
-  normalised = normalised.toLowerCase().replace(/[^a-z\s]/g, ' ').trim();
+  // Step 2: Lowercase, remove non-word punctuation (preserve colons for HI: sentinel & Devanagari)
+  normalised = normalised.toLowerCase().replace(/[^a-z:\u0900-\u097F\s]/g, ' ').trim();
   if (!normalised) return [];
 
   // Step 3: Tokenise
@@ -334,22 +334,23 @@ export function processToISL(rawText, lang = 'en') {
   let text = rawText.trim();
   if (!text) return { gloss: [], gestures: [] };
 
-  // 1. Hindi transliteration if needed
-  if (lang === 'hi' || isHindi(text)) {
+  // 1. Hindi transliteration if needed (auto-detects Devanagari)
+  if (lang === 'hi' || /[\u0900-\u097F]/.test(rawText)) {
     text = transliterateHindi(text);
-    text = text.replace(/\[[^\]]*\]/g, '');
   }
 
-  // 2. Check for whole-phrase GIF match first (before NLP splitting)
-  const lc = text.toLowerCase().replace(/[^a-z\s']/g, '').trim();
-  const phraseKey = PHRASE_TO_GIF_KEY[lc];
-  if (phraseKey) {
-    const entry = lookupWord(phraseKey);
-    if (entry) {
-      return {
-        gloss: [phraseKey],
-        gestures: [{ word: phraseKey, ...entry }]
-      };
+  // 2. Check for whole-phrase GIF match first (only if pure English)
+  if (!text.includes('HI:')) {
+    const lc = text.toLowerCase().replace(/[^a-z\s']/g, '').trim();
+    const phraseKey = PHRASE_TO_GIF_KEY[lc];
+    if (phraseKey) {
+      const entry = lookupWord(phraseKey);
+      if (entry) {
+        return {
+          gloss: [phraseKey],
+          gestures: [{ word: phraseKey, ...entry }]
+        };
+      }
     }
   }
 
