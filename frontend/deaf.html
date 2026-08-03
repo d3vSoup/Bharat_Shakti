@@ -318,20 +318,20 @@
         <div class="mb-4">
           <p class="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-2">Input Language</p>
           <div class="flex">
-            <button id="langAuto" class="lang-btn active" onclick="setLang('auto')" aria-pressed="true" aria-label="Auto-detect language">🔄 Auto</button>
-            <button id="langEn"   class="lang-btn" onclick="setLang('en')" aria-pressed="false" aria-label="Switch to English">🇬🇧 English</button>
-            <button id="langHi"   class="lang-btn" onclick="setLang('hi')" aria-pressed="false" aria-label="Switch to Hindi">🇮🇳 हिन्दी</button>
+            <button id="langAuto" class="lang-btn active" onclick="setLang('auto')" aria-pressed="true" aria-label="Auto-detect language"><span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px">autorenew</span> Auto</button>
+            <button id="langEn"   class="lang-btn" onclick="setLang('en')" aria-pressed="false" aria-label="Switch to English"><span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px">language</span> English</button>
+            <button id="langHi"   class="lang-btn" onclick="setLang('hi')" aria-pressed="false" aria-label="Switch to Hindi"><span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px">translate</span> हिन्दी</button>
           </div>
-          <p class="text-xs text-on-surface-variant mt-1">🔄 Auto detects Hindi &amp; English automatically</p>
+          <p class="text-xs text-on-surface-variant mt-1 flex items-center gap-1"><span class="material-symbols-outlined" style="font-size:12px">autorenew</span> Auto detects Hindi &amp; English via Google Translate</p>
         </div>
 
         <!-- Input Mode Tabs -->
         <div class="mb-4">
           <p class="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-2">Input Mode</p>
           <div class="flex">
-            <button class="mode-tab active" id="tab-mic"       onclick="switchMode('mic')"       aria-selected="true">🎙️ Live Mic</button>
-            <button class="mode-tab"        id="tab-paste"     onclick="switchMode('paste')"     aria-selected="false">📋 Paste Caption</button>
-            <button class="mode-tab"        id="tab-clipboard" onclick="switchMode('clipboard')" aria-selected="false">📎 Auto-Watch</button>
+            <button class="mode-tab active" id="tab-mic"       onclick="switchMode('mic')"       aria-selected="true"><span class="material-symbols-outlined" style="font-size:13px">mic</span> Live Mic</button>
+            <button class="mode-tab"        id="tab-paste"     onclick="switchMode('paste')"     aria-selected="false"><span class="material-symbols-outlined" style="font-size:13px">content_paste</span> Paste Caption</button>
+            <button class="mode-tab"        id="tab-clipboard" onclick="switchMode('clipboard')" aria-selected="false"><span class="material-symbols-outlined" style="font-size:13px">sync_alt</span> Auto-Watch</button>
           </div>
         </div>
 
@@ -386,7 +386,7 @@
             <span id="clipLabel">Start Watching Clipboard</span>
           </button>
           <p id="clipStatus" class="text-xs text-on-surface-variant mt-2 text-center hidden">
-            <span class="clip-watching">⏺ Watching clipboard for new captions…</span>
+            <span class="clip-watching flex items-center justify-center gap-1"><span class="material-symbols-outlined" style="font-size:12px">fiber_manual_record</span> Watching clipboard for new captions…</span>
           </p>
         </div>
 
@@ -399,7 +399,7 @@
           <input type="range" id="speedSlider" min="500" max="2500" step="100" value="1200"
                  oninput="updateSpeed(this.value)" aria-label="Sign display speed" class="w-full"/>
           <div class="flex justify-between text-xs text-on-surface-variant mt-1">
-            <span>⚡ Fast</span><span>🐢 Slow</span>
+            <span class="flex items-center gap-0.5"><span class="material-symbols-outlined" style="font-size:12px">bolt</span> Fast</span><span class="flex items-center gap-0.5">Slow <span class="material-symbols-outlined" style="font-size:12px">timer</span></span>
           </div>
         </div>
 
@@ -410,13 +410,14 @@
             <h1 style="font-size:20px;font-weight:bold;margin-bottom:4px">Bharat Shakti — Classroom Dialogue Transcript</h1>
             <p style="font-size:12px;color:#555">Printed on: <span id="printDate"></span></p>
             <hr style="margin:8px 0"/>
+            <div id="printEntries"></div>
           </div>
           <div class="flex items-center justify-between mb-3">
             <h3 class="font-bold text-on-surface text-sm uppercase tracking-wider flex items-center gap-1.5">
               <span class="material-symbols-outlined text-secondary text-base">forum</span>Dialogue Log
             </h3>
             <div class="flex gap-1.5">
-              <button onclick="exportPDF()" class="text-xs font-bold text-secondary border border-secondary px-2 py-1 rounded-sm hover:bg-secondary-container transition-colors flex items-center gap-1">
+              <button onclick="exportPDF()" class="text-xs font-bold text-secondary border border-secondary px-2 py-1 rounded-sm hover:bg-secondary-container transition-colors flex items-center gap-1" title="Export full 1-hour dialogue as PDF">
                 <span class="material-symbols-outlined" style="font-size:13px">picture_as_pdf</span>Export PDF
               </button>
               <button onclick="clearFeed()" class="text-xs font-bold text-on-surface-variant hover:text-error border border-outline-variant px-2 py-1 rounded-sm hover:border-error transition-colors">Clear</button>
@@ -585,10 +586,12 @@
     document.getElementById('speedLabel').textContent = (signSpeedMs / 1000).toFixed(1) + ' s/sign';
   };
 
-  window.translatePasteText = function() {
+  window.translatePasteText = async function() {
     const text = document.getElementById('pasteTextarea').value.trim();
     if (!text) return;
-    const lang = currentLang === 'hi' || isHindi(text) ? 'hi' : 'en';
+    // Use Google Translate detection for paste mode too
+    const lang = currentLang !== 'auto' ? currentLang : await detectLang(text);
+    langBadge.textContent = lang === 'hi' ? 'हिं' : currentLang === 'auto' ? 'AUTO' : 'EN';
     broadcastText(text, lang);
   };
 
@@ -623,7 +626,8 @@
   };
 
   window.clearFeed = function() {
-    feedBox.innerHTML = '<p class="text-sm text-on-surface-variant italic p-3 bg-surface-container-low border border-outline-variant rounded-sm">Transcripts will appear here…</p>';
+    localStorage.removeItem(DIALOGUE_KEY);
+    feedBox.innerHTML = '<p class="text-sm text-on-surface-variant italic p-3 bg-surface-container-low border border-outline-variant rounded-sm placeholder-msg">Dialogue will appear here…</p>';
     resetStage();
   };
 
@@ -646,27 +650,20 @@
 
       // Interim: update live bar only — NO gesture animation (prevents glitch)
       if (interim) {
-        interimBar.textContent = '🎙 ' + interim;
+        interimBar.textContent = interim;
         interimBar.className = 'min-h-10 bg-primary-fixed border-2 border-primary p-3 rounded-sm text-sm text-on-primary-fixed italic mb-1';
       }
 
-      // Final result: debounce 400ms to batch rapid sentences, then render
+      // Final result: debounce 400ms, detect language via Google, then render
       if (final.trim()) {
         interimBar.textContent = 'Speak to see live transcription…';
         interimBar.className = 'min-h-10 bg-surface-container border-2 border-dashed border-outline p-3 rounded-sm text-sm text-on-surface-variant italic mb-1';
 
-        // Language detection: check Devanagari chars first, then toggle state
-        const detectedLang = isHindi(final) ? 'hi'
-                           : currentLang === 'auto' ? 'en'
-                           : currentLang;
-
-        // Update badge to show detected language
-        langBadge.textContent = detectedLang === 'hi' ? 'हिं' : currentLang === 'auto' ? 'AUTO' : 'EN';
-
-        // Debounce: wait 400ms after last final before rendering ISL
-        // This prevents repeated rapid results from restarting animation
         clearTimeout(renderDebounce);
-        renderDebounce = setTimeout(() => {
+        renderDebounce = setTimeout(async () => {
+          // Use Google Translate detection (async) for best accuracy
+          const detectedLang = currentLang !== 'auto' ? currentLang : await detectLang(final.trim());
+          langBadge.textContent = detectedLang === 'hi' ? 'हिं' : 'AUTO';
           broadcastText(final.trim(), detectedLang);
         }, 400);
       }
@@ -702,32 +699,99 @@
 
   micBtn.addEventListener('click', () => isRecording ? stopRecording() : startRecording());
 
+  /* ── Google Translate Language Detection ────────────── */
+  async function detectLang(text) {
+    // Fast path: Devanagari chars = definitely Hindi
+    if (/[\u0900-\u097F]/.test(text)) return 'hi';
+    // Call backend /detect-lang which uses Google Translate API
+    try {
+      const res = await fetch(`/detect-lang?text=${encodeURIComponent(text.slice(0,200))}`);
+      if (res.ok) {
+        const data = await res.json();
+        console.log('[LangDetect]', data.source, '→', data.lang, data.confidence);
+        return data.lang;
+      }
+    } catch(e) { /* offline fallback below */ }
+    // Hinglish fallback
+    const hinglish = new Set(['namaste','namaskar','aaj','kal','haan','nahi','kitab',
+      'shikshak','padhna','likhna','dhanyawad','shukriya','madad','achha','kaise','kyun']);
+    const words = new Set(text.toLowerCase().split(/\s+/));
+    for (const w of words) { if (hinglish.has(w)) return 'hi'; }
+    return currentLang === 'hi' ? 'hi' : 'en';
+  }
+
   /* ── Core Broadcast & Render ──────────────────────── */
   function broadcastText(text, lang) {
     if (socket && socket.readyState === WebSocket.OPEN) {
       socket.send(JSON.stringify({ type: 'speech_input', text, lang }));
     }
+    saveDialogueEntry(text, lang);
     addTranscriptEntry(text, lang);
     renderISL(text, lang);
   }
 
-  /* ── Export dialogue log as PDF ──────────────────── */
+  /* ── localStorage Dialogue (1-hour TTL) ─────────────── */
+  const DIALOGUE_KEY  = 'bs_dialogue_v1';
+  const DIALOGUE_TTL  = 60 * 60 * 1000; // 1 hour in ms
+
+  function saveDialogueEntry(text, lang) {
+    const entries = loadDialogueEntries();
+    entries.push({ text, lang, ts: Date.now() });
+    try { localStorage.setItem(DIALOGUE_KEY, JSON.stringify(entries)); } catch(e) {}
+  }
+
+  function loadDialogueEntries() {
+    try {
+      const raw = localStorage.getItem(DIALOGUE_KEY);
+      if (!raw) return [];
+      const now = Date.now();
+      // Keep only entries from the last 1 hour
+      return JSON.parse(raw).filter(e => now - e.ts < DIALOGUE_TTL);
+    } catch(e) { return []; }
+  }
+
+  function restoreDialogueFromStorage() {
+    const entries = loadDialogueEntries();
+    if (!entries.length) return;
+    feedBox.innerHTML = ''; // clear placeholder
+    // Render oldest-first, then prepend newest on top
+    [...entries].reverse().forEach(e => addTranscriptEntry(e.text, e.lang, e.ts));
+  }
+
+  /* ── Export dialogue log as PDF (full 1-hour history) ── */
   window.exportPDF = function() {
+    // Load all stored entries and render them in a hidden print-only section
+    const entries = loadDialogueEntries();
+    const printList = document.getElementById('printEntries');
+    printList.innerHTML = entries.reverse().map(e => {
+      const time = new Date(e.ts).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+      return `<div class="transcript-entry" style="margin-bottom:8px;padding:8px 12px;border:1px solid #ccc;border-radius:4px">
+        <span style="font-size:10px;font-weight:bold;color:#555;margin-right:8px">${e.lang === 'hi' ? 'HI' : 'EN'}</span>
+        <span style="font-size:13px">${e.text}</span>
+        <span style="font-size:10px;color:#999;margin-left:8px">${time}</span>
+      </div>`;
+    }).join('');
     document.getElementById('printDate').textContent =
       new Date().toLocaleString('en-IN', { dateStyle: 'long', timeStyle: 'short' });
     window.print();
   };
 
-  function addTranscriptEntry(text, lang = 'en') {
-    if (feedBox.querySelector('p')) feedBox.innerHTML = '';
-    const now = new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  function addTranscriptEntry(text, lang = 'en', tsMs = null) {
+    if (feedBox.querySelector('p.placeholder-msg')) feedBox.innerHTML = '';
+    const now = tsMs
+      ? new Date(tsMs).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit'})
+      : new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
     const div = document.createElement('div');
     div.className = 'transcript-entry flex gap-3 items-start p-3 bg-surface-container-low border-2 border-outline-variant rounded-sm';
     div.innerHTML = `
-      <div class="w-7 h-7 bg-secondary-container border border-outline rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold text-on-secondary-container">T</div>
+      <div class="w-7 h-7 bg-secondary-container border border-outline rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold text-on-secondary-container">
+        <span class="material-symbols-outlined" style="font-size:13px">person</span>
+      </div>
       <div class="flex-1 min-w-0">
         <div class="flex items-center gap-1.5 mb-0.5">
-          <span class="text-xs font-bold px-1.5 py-0 rounded border border-outline-variant text-on-surface-variant bg-surface-container">${lang === 'hi' ? 'HI' : 'EN'}</span>
+          <span class="text-xs font-bold px-1.5 py-0 rounded border border-outline-variant text-on-surface-variant bg-surface-container flex items-center gap-0.5">
+            <span class="material-symbols-outlined" style="font-size:10px">${lang === 'hi' ? 'translate' : 'language'}</span>${lang === 'hi' ? 'HI' : 'EN'}
+          </span>
         </div>
         <p class="text-sm text-on-surface leading-relaxed">${text}</p>
         <p class="text-xs text-on-surface-variant mt-0.5 font-mono">${now}</p>
@@ -798,8 +862,10 @@
         const showBadge     = isLetter || isHindiLetter;
         fspIndicator.classList.toggle('hidden', !showBadge);
         if (showBadge) {
-          document.getElementById('fspIndicatorText').textContent =
-            isHindiLetter ? `🇮🇳 ${curGesture.label}` : `✋ ${curGesture.label}`;
+          document.getElementById('fspIndicatorText').innerHTML =
+            isHindiLetter
+              ? `<span class="material-symbols-outlined" style="font-size:13px">translate</span> ${curGesture.label}`
+              : `<span class="material-symbols-outlined" style="font-size:13px">sign_language</span> ${curGesture.label}`;
         }
         gestureImg.style.objectFit =
           (curGesture?.type === 'gif' || curGesture?.type === 'still') ? 'contain' : 'cover';
@@ -837,7 +903,10 @@
     socket.onclose = () => { setWsState('error'); setTimeout(connectWS, 3000); };
   }
 
-  window.addEventListener('load', connectWS);
+  window.addEventListener('load', () => {
+    connectWS();
+    restoreDialogueFromStorage(); // Reload up to 1 hour of past dialogue
+  });
 </script>
 <script src="gradient-bg.js"></script>
 </body>

@@ -1,8 +1,11 @@
 import json
+import urllib.request
+import urllib.parse
 from typing import List
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 import os
 
 app = FastAPI(title="Bharat Shakti - Inclusive Classroom Backend")
@@ -39,6 +42,47 @@ class ConnectionManager:
                 print(f"Error sending message to client: {e}")
 
 manager = ConnectionManager()
+
+# ── Language Detection ────────────────────────────────────────────────────────
+@app.get("/detect-lang")
+def detect_lang(text: str):
+    """
+    Detect whether input text is Hindi ('hi') or English ('en').
+    Uses Google Translate's public language detection endpoint.
+    Returns { lang: 'hi' | 'en', confidence: float }
+    """
+    import re
+
+    # Fast path: Devanagari characters → definitely Hindi
+    if re.search(r'[\u0900-\u097F]', text):
+        return JSONResponse({"lang": "hi", "confidence": 1.0, "source": "devanagari"})
+
+    # Call Google Translate unofficial detection endpoint (no API key needed)
+    try:
+        encoded = urllib.parse.quote(text[:200])  # cap at 200 chars
+        url = (
+            f"https://translate.googleapis.com/translate_a/single"
+            f"?client=gtx&sl=auto&tl=en&dt=t&q={encoded}"
+        )
+        req = urllib.request.Request(url, headers={
+            "User-Agent": "Mozilla/5.0"
+        })
+        with urllib.request.urlopen(req, timeout=3) as resp:
+            data = json.loads(resp.read())
+        # Response format: [[translations...], null, detected_lang, ...]
+        detected = data[2] if len(data) > 2 else "en"
+        lang = "hi" if detected in ("hi", "ur") else "en"
+        return JSONResponse({"lang": lang, "confidence": 0.95, "source": "google"})
+    except Exception as e:
+        print(f"Language detection fallback: {e}")
+        # Fallback: basic Hinglish word check
+        hinglish = {"namaste","namaskar","aaj","kal","haan","nahi","kitab","shikshak",
+                    "padhna","likhna","dhanyawad","shukriya","madad","achha","kaise","kyun"}
+        words = set(text.lower().split())
+        if words & hinglish:
+            return JSONResponse({"lang": "hi", "confidence": 0.75, "source": "hinglish"})
+        return JSONResponse({"lang": "en", "confidence": 0.5, "source": "fallback"})
+
 
 @app.websocket("/ws/student/{mode}")
 async def websocket_endpoint(websocket: WebSocket, mode: str):
