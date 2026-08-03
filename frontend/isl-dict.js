@@ -219,6 +219,15 @@ export const HINDI_TO_ENGLISH = {
   'ठीक है': 'okay',     'ठीक': 'okay',          'मदद': 'help',
   'रुको': 'stop',       'रुकिए': 'stop',        'अच्छा': 'good',
   'बुरा': 'wrong',      'सही': 'correct',       'गलत': 'wrong',
+  // Pronouns
+  'मैं': 'i',            'हम': 'we',            'तुम': 'you',
+  'आप': 'you',          'वह': 'he',            'वे': 'they',
+  'यह': 'this',         'ये': 'these',         'मेरा': 'my',
+  'मेरी': 'my',          'मेरे': 'my',          'तुम्हारा': 'your',
+  'आपका': 'your',        'हमारा': 'our',        'उनका': 'their',
+  // Question words
+  'क्या': 'what',       'कौन': 'who',          'कहाँ': 'where',
+  'कब': 'when',         'क्यों': 'why',        'कैसे': 'how',
   // Actions & adjectives
   'जाओ': 'go',          'आओ': 'come',           'बैठो': 'sit',
   'खड़े': 'stand',      'चलो': 'walk',          'दो': 'give',
@@ -232,6 +241,8 @@ export const HINDI_TO_ENGLISH = {
   'बंद करो': 'close',   'महत्वपूर्ण': 'important','मुश्किल': 'difficult',
   'आसान': 'easy',       'प्यार': 'love',        'पसंद': 'like',
   'भारत': 'india',      'भाषा': 'language',     'काम': 'work',
+  'पढ़ेंगे': 'read',     'लिखेंगे': 'write',     'करेंगे': 'do',
+  'देखेंगे': 'see',      'सुनेंगे': 'listen',    'बताएंगे': 'tell',
 };
 
 /**
