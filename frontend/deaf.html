@@ -436,9 +436,9 @@
         <!-- Gesture image -->
             <div class="relative flex items-center justify-center">
               <img id="gestureImg" src="" alt="ISL gesture" class="gesture-visible"/>
-              <!-- Fingerspell overlay indicator — top-right of image -->
+              <!-- Fingerspell / Hindi letter overlay indicator — top-right of image -->
               <div id="fspIndicator" class="hidden absolute top-1 right-1 bg-primary-container border border-on-surface px-2 py-0.5 rounded-full text-xs font-bold text-on-primary-fixed z-10">
-                ✋ Fingerspelling
+                <span id="fspIndicatorText">✋ Fingerspelling</span>
               </div>
             </div>
             <!-- Word label -->
@@ -716,10 +716,17 @@
         }, 3000);
       },
       (curGesture) => {
-        // Toggle Fingerspelling badge dynamically per active gesture
-        const isFsp = curGesture?.type === 'letter';
-        fspIndicator.classList.toggle('hidden', !isFsp);
-        gestureImg.style.objectFit = (curGesture?.type === 'gif' || curGesture?.type === 'still') ? 'contain' : 'cover';
+        // Toggle badge dynamically per active gesture
+        const isLetter      = curGesture?.type === 'letter';
+        const isHindiLetter = curGesture?.type === 'hindi_letter';
+        const showBadge     = isLetter || isHindiLetter;
+        fspIndicator.classList.toggle('hidden', !showBadge);
+        if (showBadge) {
+          document.getElementById('fspIndicatorText').textContent =
+            isHindiLetter ? `🇮🇳 ${curGesture.label}` : `✋ ${curGesture.label}`;
+        }
+        gestureImg.style.objectFit =
+          (curGesture?.type === 'gif' || curGesture?.type === 'still') ? 'contain' : 'cover';
       }
     );
   }

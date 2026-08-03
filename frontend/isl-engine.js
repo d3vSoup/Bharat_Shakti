@@ -8,7 +8,7 @@
  * Entirely runs in the browser. Zero server round-trips.
  */
 
-import { lookupWord, fingerspell, HINDI_TO_ENGLISH } from './isl-dict.js';
+import { lookupWord, fingerspell, fingerspellHindi, HINDI_TO_ENGLISH } from './isl-dict.js';
 
 // ── Contractions expander ─────────────────────────────────────────────────
 // Real ISL interpreters work from full words, not contracted English
@@ -266,11 +266,9 @@ export function transliterateHindi(text) {
     result = result.split(hindi).join(english);
   }
 
-  // Remove any remaining Devanagari characters (unmapped words → fingerspell as ?)
-  result = result.replace(/[\u0900-\u097F]+/g, w => {
-    // Try to romanise loosely — map common consonants
-    return '[' + w + ']'; // mark unmapped for caller visibility
-  });
+  // Remaining Devanagari tokens not in the dictionary:
+  // Tag them with "HI:" prefix so processToISL routes them to fingerspellHindi()
+  result = result.replace(/[\u0900-\u097F]+/g, w => `HI:${w}`);
 
   return result.trim();
 }
@@ -361,11 +359,18 @@ export function processToISL(rawText, lang = 'en') {
   // 4. Build gesture sequence: word lookup → fingerspell fallback
   const gestures = [];
   for (const glossWord of gloss) {
+    // Hindi words that didn't transliterate are tagged "HI:<devanagari>"
+    if (glossWord.startsWith('HI:')) {
+      const hindiWord = glossWord.slice(3); // strip sentinel
+      const hindiFrames = fingerspellHindi(hindiWord);
+      hindiFrames.forEach(l => gestures.push({ word: hindiWord, ...l }));
+      continue;
+    }
     const entry = lookupWord(glossWord);
     if (entry) {
       gestures.push({ word: glossWord, ...entry });
     } else {
-      // Fingerspell each letter
+      // Fingerspell each English letter with real A-Z hand photos
       const letters = fingerspell(glossWord);
       letters.forEach(l => gestures.push({ word: glossWord, ...l }));
     }

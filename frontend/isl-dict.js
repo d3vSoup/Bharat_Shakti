@@ -2,24 +2,46 @@
  * isl-dict.js — Bharat Shakti ISL Gesture Dictionary
  *
  * Image sources (priority order):
- *  1. Animated GIFs  — satyam9090/Automatic-Indian-Sign-Language-Translator (86 real GIFs)
+ *  1. Animated GIFs  — satyam9090/Automatic-Indian-Sign-Language-Translator (86 real ISL GIFs)
  *     words/*.gif → real animated ISL gesture GIFs
  *  2. Vivit still frames — Kaggle kaushikyh/indian-sign-language-words-with-landmarks
  *     words_vivit/*.jpg → landmark-overlaid ISL word frames (224×224, from MOV)
- *  3. Fallback → null (triggers clean A-Z fingerspelling with 384x384 real hand photos)
+ *  3. Fallback → null (triggers clean A-Z fingerspelling with 384×384 real hand photos)
+ *  4. Hindi Devanagari fingerspelling — HindiSignImages48x48 dataset (40 characters)
+ *     hindi_letters/<unicode-hex>.jpg → real ISL hand photos for each Hindi letter
  *
  * NOTE: Cartoon SVG hands have been removed completely per design requirements.
  */
 
-const LETTERS_PATH     = '/isl_gestures/letters/';
-const WORDS_PATH       = '/isl_gestures/words/';
-const WORDS_VIVIT_PATH = '/isl_gestures/words_vivit/';
+const LETTERS_PATH       = '/isl_gestures/letters/';
+const WORDS_PATH         = '/isl_gestures/words/';
+const WORDS_VIVIT_PATH   = '/isl_gestures/words_vivit/';
+const HINDI_LETTERS_PATH = '/isl_gestures/hindi_letters/';
 
-// ── Alphabet fingerspelling — 384×384 real high-contrast photos ────────────
+// ── English Alphabet fingerspelling — 384×384 real high-contrast photos ─────
 export const LETTER_PATHS = {};
 'abcdefghijklmnopqrstuvwxyz'.split('').forEach(ch => {
   LETTER_PATHS[ch.toUpperCase()] = `${LETTERS_PATH}${ch}.jpg`;
 });
+
+// ── Hindi Devanagari fingerspelling — HindiSignImages48x48 real hand photos ──
+// Key = Devanagari character, Value = filename (unicode codepoint hex of the char)
+export const HINDI_LETTER_PATHS = {
+  'अ': '0905.jpg',  'आ': '0906.jpg',  'इ': '0907.jpg',
+  'ई': '0908.jpg',  'उ': '0909.jpg',  'ए': '090f.jpg',
+  'ऐ': '0910.jpg',  'ओ': '0913.jpg',  'क': '0915.jpg',
+  'ख': '0916.jpg',  'ग': '0917.jpg',  'घ': '0918.jpg',
+  'च': '091a.jpg',  'छ': '091b.jpg',  'ज': '091c.jpg',
+  'झ': '091d.jpg',  'ट': '091f.jpg',  'ठ': '0920.jpg',
+  'ड': '0921.jpg',  'ढ': '0922.jpg',  'ण': '0923.jpg',
+  'त': '0924.jpg',  'थ': '0925.jpg',  'द': '0926.jpg',
+  'ध': '0927.jpg',  'न': '0928.jpg',  'प': '092a.jpg',
+  'फ': '092b.jpg',  'ब': '092c.jpg',  'भ': '092d.jpg',
+  'म': '092e.jpg',  'य': '092f.jpg',  'र': '0930.jpg',
+  'ल': '0932.jpg',  'व': '0935.jpg',  'श': '0936.jpg',
+  'स': '0938.jpg',  'ह': '0939.jpg',
+  'क्ष': '0915-094d-0937.jpg',  'ज्ञ': '091c-094d-091e.jpg',
+};
 
 // ── Word GIFs (86 animated ISL gesture GIFs from satyam9090) ──────────────
 export const WORD_GIFS = {
@@ -272,7 +294,7 @@ export function lookupWord(word) {
 }
 
 /**
- * Fingerspelling — uses 384x384 real ISL hand photos (A-Z).
+ * Fingerspelling (English) — uses 384×384 real ISL hand photos (A-Z).
  */
 export function fingerspell(word) {
   return word.toUpperCase().split('').map(ch => {
@@ -280,4 +302,38 @@ export function fingerspell(word) {
     const path = LETTER_PATHS[ch];
     return path ? { url: path, type: 'letter', label: ch } : null;
   }).filter(Boolean);
+}
+
+/**
+ * Hindi Devanagari fingerspelling — uses HindiSignImages48x48 real hand photos.
+ * Breaks a Hindi word into individual Devanagari characters (grapheme clusters)
+ * and returns gesture frames for each one. Unknown characters are skipped.
+ * Multi-char ligatures (क्ष, ज्ञ) are handled by matching longest first.
+ */
+export function fingerspellHindi(word) {
+  const frames = [];
+  // Try multi-char ligatures first, then single chars
+  const multiChar = ['क्ष', 'ज्ञ'];
+  let i = 0;
+  const chars = [...word]; // spread into Unicode grapheme array
+  while (i < chars.length) {
+    // Try to match a 2-char ligature at position i
+    const twoChar = chars[i] + (chars[i + 1] || '') + (chars[i + 2] || '');
+    const ligature = multiChar.find(l => twoChar.startsWith(l));
+    if (ligature) {
+      const file = HINDI_LETTER_PATHS[ligature];
+      if (file) frames.push({ url: `${HINDI_LETTERS_PATH}${file}`, type: 'hindi_letter', label: ligature });
+      i += [...ligature].length;
+      continue;
+    }
+    const ch = chars[i];
+    // Skip virama (halant ्) and vowel diacritics — they attach to the previous consonant
+    const skipMarks = /[\u094D\u093E-\u094C\u0902\u0903]/;
+    if (!skipMarks.test(ch)) {
+      const file = HINDI_LETTER_PATHS[ch];
+      if (file) frames.push({ url: `${HINDI_LETTERS_PATH}${file}`, type: 'hindi_letter', label: ch });
+    }
+    i++;
+  }
+  return frames;
 }
