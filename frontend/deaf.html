@@ -701,12 +701,9 @@
 
   /* ── Environment & Backend Host Configuration ──────── */
   const IS_LOCAL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-  // Override this with your live Render backend domain after deploying to Render
-  const PRODUCTION_BACKEND = window.RENDER_BACKEND_URL || 'bharat-shakti-backend.onrender.com';
-  
-  const BACKEND_HOST = IS_LOCAL ? 'localhost:8000' : PRODUCTION_BACKEND;
-  const BACKEND_HTTP = IS_LOCAL ? 'http://localhost:8000' : `https://${PRODUCTION_BACKEND}`;
-  const BACKEND_WS   = IS_LOCAL ? 'ws://localhost:8000'   : `wss://${PRODUCTION_BACKEND}`;
+  const RENDER_HOST  = 'bharat-shakti-backend.onrender.com';
+  const BACKEND_HTTP = IS_LOCAL ? 'http://localhost:8000' : `https://${RENDER_HOST}`;
+  const BACKEND_WS   = IS_LOCAL ? 'ws://localhost:8000'   : `wss://${RENDER_HOST}`;
 
   /* ── Google Translate Language Detection ────────────── */
   async function detectLang(text) {
@@ -729,35 +726,6 @@
     return currentLang === 'hi' ? 'hi' : 'en';
   }
 
-  /* ── WebSocket ───────────────────────────────────── */
-  let socket;
-  const wsDot  = document.getElementById('wsDot');
-  const wsText = document.getElementById('wsText');
-
-  function setWsState(state) {
-    const map = {
-      online:     ['bg-primary',  'Connected'],
-      error:      ['bg-error',    'Disconnected'],
-      connecting: ['bg-outline',  'Connecting…']
-    };
-    const [dotCls, label] = map[state] || map.connecting;
-    wsDot.className = `w-2 h-2 rounded-full inline-block ${dotCls}`;
-    wsText.textContent = label;
-  }
-
-  function connectWS() {
-    setWsState('connecting');
-    socket = new WebSocket(`${BACKEND_WS}/ws/student/deaf`);
-    socket.onopen    = () => setWsState('online');
-    socket.onmessage = e => {
-      const d = JSON.parse(e.data);
-      if (d.type === 'broadcast' && d.text) {
-        addTranscriptEntry(d.text, d.lang || 'en');
-        renderISL(d.text, d.lang || 'en');
-      }
-    };
-    socket.onclose = () => { setWsState('error'); setTimeout(connectWS, 3000); };
-  }
 
   /* ── Core Broadcast & Render ──────────────────────── */
   function broadcastText(text, lang) {
@@ -911,6 +879,37 @@
       }
     );
   }
+
+  /* ── WebSocket ───────────────────────────────────── */
+  let socket;
+  const wsDot  = document.getElementById('wsDot');
+  const wsText = document.getElementById('wsText');
+
+  function setWsState(state) {
+    const map = {
+      online:     ['bg-primary',  'Connected'],
+      error:      ['bg-error',    'Disconnected'],
+      connecting: ['bg-outline',  'Connecting…']
+    };
+    const [dotCls, label] = map[state] || map.connecting;
+    wsDot.className = `w-2 h-2 rounded-full inline-block ${dotCls}`;
+    wsText.textContent = label;
+  }
+
+  function connectWS() {
+    setWsState('connecting');
+    socket = new WebSocket(`${BACKEND_WS}/ws/student/deaf`);
+    socket.onopen    = () => setWsState('online');
+    socket.onmessage = e => {
+      const d = JSON.parse(e.data);
+      if (d.type === 'broadcast' && d.text) {
+        addTranscriptEntry(d.text, d.lang || 'en');
+        renderISL(d.text, d.lang || 'en');
+      }
+    };
+    socket.onclose = () => { setWsState('error'); setTimeout(connectWS, 3000); };
+  }
+
 
   window.addEventListener('load', () => {
     connectWS();
