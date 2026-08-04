@@ -184,15 +184,186 @@ This makes it deployable in **government schools, NGOs, and institutions** with 
 
 ---
 
-## 💡 Open Discussion Points (To Add More Here)
+## 🚀 Future Goals — What Would Make This Unstoppable
 
-> *(This section captures ongoing design decisions and thoughts as we discuss them.)*
+> *"What turns an impressive demo into a product that deaf students actually depend on?"*
+
+### Tier 1: Near-Term — Can Build This Week
+
+#### 🔁 12. Two-Way Communication via MediaPipe (Student Signs Back)
+
+**Right now, communication is one-way: teacher speaks → student sees signs.**
+
+What if the deaf student could **raise their hand, sign a question via their webcam**, and the teacher sees the text on their screen?
+
+- Use **Google MediaPipe Hands** (runs entirely in-browser, no server needed) to track 21 hand landmarks per hand in real-time.
+- Classify detected hand poses against our ISL dictionary in reverse.
+- Display the recognised text on the **teacher's dashboard** as a live chat message.
+
+**Why this is a game-changer:** It turns Bharat Shakti from a broadcast tool into a **conversation**. A deaf student can finally participate in class discussions, ask questions, and answer the teacher — all in ISL, translated back to text. Nobody has built this for ISL in a classroom context.
+
+---
+
+#### 🧠 13. AI Sentence Simplification (Complex → Sign-Friendly)
+
+Academic language is complex. A teacher might say:
+> *"Photosynthesis is the biochemical process by which chloroplasts convert solar radiation into glucose."*
+
+That sentence has zero ISL gesture matches. Fingerspelling every word makes it unintelligible.
+
+**The fix:** Before ISL lookup, run the sentence through an **AI simplification layer** that rewrites it as:
+> *"PLANT MAKE FOOD FROM SUNLIGHT"*
+
+This dramatically increases ISL dictionary coverage and produces signing output that actually communicates meaning, not just letters.
+
+- Can use a lightweight LLM (Gemini Nano / GPT-4o-mini) for rewriting.
+- Preserves core meaning while reducing vocabulary to high-frequency ISL words.
+- Shows both the original and simplified version in the gloss ribbon so the student learns the real word too.
+
+---
+
+#### 👁️ 14. Teacher Sign Preview (See Before You Broadcast)
+
+**Before the teacher's words go live to every student screen, let them preview the ISL output first.**
+
+A small "Preview" button next to the Translate button that shows the teacher:
+- Which words will render as **animated GIFs** (exact match).
+- Which words will be **fingerspelled** (no match).
+- The **SOV-reordered gloss** so they can verify the grammar looks right.
+- A **coverage percentage**: "78% of your sentence has direct ISL signs."
+
+If the coverage is low, the teacher can rephrase before broadcasting. This gives teachers **agency and confidence** in the tool.
+
+---
+
+#### ⭐ 15. Bookmark Moments During Lecture
+
+During a live lecture, a deaf student might want to mark a specific moment:
+- *"I didn't understand this part"*
+- *"This is important for the exam"*
+- *"I want to ask about this later"*
+
+A simple **⭐ Bookmark** button that timestamps the current moment in the dialogue log. When the PDF is exported, bookmarked moments are **highlighted in yellow** with the student's notes.
+
+This turns the PDF from a passive transcript into an **active study guide**.
+
+---
+
+### Tier 2: Medium-Term — Stretch Goals
+
+#### 🎭 16. Emotion & Tone Overlay (What the Voice Conveys)
+
+Deaf students miss 100% of vocal tone — sarcasm, urgency, excitement, gentleness, anger. These carry as much meaning as the words themselves.
+
+**Solution:** Analyse speech prosody (pitch, speed, volume) from the Web Speech API or audio stream and overlay visual cues on the ISL viewer:
+- 🔴 **Urgent/Loud** → Red pulsing border + faster sign speed.
+- 💙 **Calm/Gentle** → Blue ambient glow + slower pacing.
+- 💛 **Excited/Happy** → Golden sparkle animation.
+- ⚡ **Emphasis** → Sign image briefly enlarges (zoom pulse).
+
+This adds the **emotional layer** that pure text-to-sign translation strips away. The student doesn't just see what the teacher said — they feel *how* they said it.
+
+---
+
+#### 📚 17. Subject-Specific ISL Vocabularies (Switch by Class)
+
+ISL has specialised signs for Science, Mathematics, Geography, and History — but they're different from everyday vocabulary.
+
+Allow the teacher to toggle a **subject mode**:
+- **Science mode** → loads signs for "atom", "cell", "experiment", "microscope"
+- **Maths mode** → loads signs for "fraction", "equation", "triangle", "divide"
+- **Geography mode** → loads signs for "river", "mountain", "climate", "earthquake"
+
+Each mode activates a curated ISL sub-dictionary. This dramatically improves sign coverage for academic content and avoids fingerspelling technical terms that have real ISL equivalents.
+
+---
+
+#### 🗣️ 18. Contextual Sign Disambiguation
+
+Many English words have multiple ISL signs depending on context:
+- **"Bank"** → river bank (geography sign) vs. financial bank (money sign)
+- **"Light"** → weight/light (adjective sign) vs. lamp/illumination (noun sign)
+- **"Break"** → fracture/snap vs. rest/pause
+
+Use the **surrounding sentence context** to pick the correct sign variant. A simple NLP model or even keyword-window heuristic can solve 80% of these cases.
+
+This is the difference between a naive word-lookup and a **semantically aware translator**.
+
+---
+
+#### 🌍 19. Regional ISL Dialect Support
+
+ISL is not fully standardised across India. The sign for "water" in Mumbai may differ from the sign in Delhi or Chennai.
+
+Allow schools to configure their **regional dialect preference**:
+- North India (Delhi/UP ISL conventions)
+- West India (Mumbai/Gujarat ISL conventions)
+- South India (Chennai/Bangalore ISL conventions)
+- ISLRTC Standard (standardised dictionary from the Indian Sign Language Research and Training Centre)
+
+This makes Bharat Shakti **culturally accurate**, not just linguistically accurate. It also opens the door for **community-contributed sign variants**.
+
+---
+
+#### 🤝 20. Deaf Student Peer Chat (Sign-to-Sign Breakout Rooms)
+
+Two deaf students can join a private breakout room, sign to each other via their webcams (using MediaPipe), and each sees the other's signs translated to text.
+
+**Why this matters:** Group work, discussions, and peer learning are standard in classrooms. Currently, deaf students are excluded from peer conversations. This feature gives them a native communication channel within the Bharat Shakti ecosystem.
+
+---
+
+### Tier 3: Moonshot — Long-Term Vision
+
+#### 🎬 21. Generative ISL Avatar (Sign Any Sentence Fluidly)
+
+Instead of showing discrete static images one-by-one, generate a **smooth, continuous signing animation** using a trained pose-generation model.
+
+- Input: any English/Hindi sentence
+- Output: a 3D avatar or video performing the complete sentence as one fluid ISL utterance — with proper transitions between signs, facial expressions, and mouth patterns.
+
+This is the Holy Grail of sign language technology. Current academic research (e.g., SignGAN, MotionBERT) is making progress, but no one has deployed this for ISL at production quality.
+
+If we build this, Bharat Shakti becomes not just a classroom tool but a **platform** — the ISL equivalent of Google Translate.
+
+---
+
+#### 📱 22. WhatsApp Bot for Deaf Families
+
+Extend the ISL engine beyond the classroom:
+- A parent sends a Hindi/English text message via WhatsApp.
+- The bot converts it to a sequence of ISL sign images/GIFs and sends them back as a visual message.
+- The deaf child reads the signs on their parent's phone.
+
+This bridges the **communication gap at home** — not just at school. 75% of deaf children in India have hearing parents who don't know ISL. This bot becomes a daily communication bridge.
+
+---
+
+#### 🏫 23. ISL Learning Mode (Reverse the Tool)
+
+Flip the entire system:
+- Instead of translating speech → signs, use it to **teach hearing students ISL**.
+- Show a sign, the hearing student guesses the word.
+- Turn on the webcam, the student attempts the sign, MediaPipe checks if they got it right.
+- Gamified with streaks, levels, and classroom leaderboards.
+
+**Why this is powerful:** True inclusion isn't just making content accessible to deaf students — it's teaching hearing students to communicate in ISL. This promotes **bidirectional inclusion** and could be used in any school as a language class.
+
+---
+
+## 💡 Open Discussion Points
+
+> *(Ongoing design decisions as we discuss them.)*
 
 - **[ ] Discuss**: Should we add phoneme-level fingerspelling for words not in the ISL dictionary (e.g. proper nouns like "Einstein", "Maharashtra")?
 - **[ ] Discuss**: How do we handle regional ISL dialect differences? (ISL is not fully standardized nationally.)
 - **[ ] Discuss**: Can we add a "confidence score" shown to the teacher so they know when a translation is exact vs. fingerspelled approximation?
 - **[ ] Discuss**: How do we showcase the SOV grammar transformation visually in the UI — perhaps a "gloss ribbon" showing the reordered words?
+- **[ ] Discuss**: What LLM to use for sentence simplification — Gemini Nano (free, on-device) vs. GPT-4o-mini (cheap API)?
+- **[ ] Discuss**: Should MediaPipe sign recognition (USP #12) run on the student's device or stream frames to the server?
+- **[ ] Discuss**: For the WhatsApp bot — use Twilio or Meta's official WhatsApp Business API?
 
 ---
 
 *Last updated: August 2026 | Bharat Shakti Team*
+
