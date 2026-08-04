@@ -10,13 +10,15 @@
  *  4. Hindi Devanagari fingerspelling — HindiSignImages48x48 dataset (40 characters)
  *     hindi_letters/<unicode-hex>.jpg → real ISL hand photos for each Hindi letter
  *
- * NOTE: Cartoon SVG hands have been removed completely per design requirements.
+ * NOTE: All images are hosted on Supabase Storage CDN for public deployment.
  */
 
-const LETTERS_PATH       = '/isl_gestures/letters/';
-const WORDS_PATH         = '/isl_gestures/words/';
-const WORDS_VIVIT_PATH   = '/isl_gestures/words_vivit/';
-const HINDI_LETTERS_PATH = '/isl_gestures/hindi_letters/';
+const CDN = 'https://cnwsrgqlpvxxnwsndhsm.supabase.co/storage/v1/object/public/isl-gestures';
+
+const LETTERS_PATH       = `${CDN}/letters/`;
+const WORDS_PATH         = `${CDN}/words/`;
+const WORDS_VIVIT_PATH   = '/isl_gestures/words_vivit/'; // still local (not yet on CDN)
+const HINDI_LETTERS_PATH = `${CDN}/hindi_letters/`;
 
 // ── English Alphabet fingerspelling — 384×384 real high-contrast photos ─────
 export const LETTER_PATHS = {};
@@ -24,23 +26,50 @@ export const LETTER_PATHS = {};
   LETTER_PATHS[ch.toUpperCase()] = `${LETTERS_PATH}${ch}.jpg`;
 });
 
-// ── Hindi Devanagari fingerspelling — HindiSignImages48x48 real hand photos ──
-// Key = Devanagari character, Value = filename (unicode codepoint hex of the char)
+// ── Hindi Devanagari fingerspelling — ASCII-safe CDN paths ───────────────────
+// Files stored with ASCII romanized names (Supabase rejects Unicode keys)
+// Key = Devanagari character, Value = full CDN URL
 export const HINDI_LETTER_PATHS = {
-  'अ': '0905.jpg',  'आ': '0906.jpg',  'इ': '0907.jpg',
-  'ई': '0908.jpg',  'उ': '0909.jpg',  'ए': '090f.jpg',
-  'ऐ': '0910.jpg',  'ओ': '0913.jpg',  'क': '0915.jpg',
-  'ख': '0916.jpg',  'ग': '0917.jpg',  'घ': '0918.jpg',
-  'च': '091a.jpg',  'छ': '091b.jpg',  'ज': '091c.jpg',
-  'झ': '091d.jpg',  'ट': '091f.jpg',  'ठ': '0920.jpg',
-  'ड': '0921.jpg',  'ढ': '0922.jpg',  'ण': '0923.jpg',
-  'त': '0924.jpg',  'थ': '0925.jpg',  'द': '0926.jpg',
-  'ध': '0927.jpg',  'न': '0928.jpg',  'प': '092a.jpg',
-  'फ': '092b.jpg',  'ब': '092c.jpg',  'भ': '092d.jpg',
-  'म': '092e.jpg',  'य': '092f.jpg',  'र': '0930.jpg',
-  'ल': '0932.jpg',  'व': '0935.jpg',  'श': '0936.jpg',
-  'स': '0938.jpg',  'ह': '0939.jpg',
-  'क्ष': '0915-094d-0937.jpg',  'ज्ञ': '091c-094d-091e.jpg',
+  'अ': `${CDN}/hindi_signs/hi_a.jpg`,
+  'आ': `${CDN}/hindi_signs/hi_aa.jpg`,
+  'इ': `${CDN}/hindi_signs/hi_i.jpg`,
+  'ई': `${CDN}/hindi_signs/hi_ii.jpg`,
+  'उ': `${CDN}/hindi_signs/hi_u.jpg`,
+  'ए': `${CDN}/hindi_signs/hi_e.jpg`,
+  'ऐ': `${CDN}/hindi_signs/hi_ai.jpg`,
+  'ओ': `${CDN}/hindi_signs/hi_o.jpg`,
+  'क': `${CDN}/hindi_signs/hi_ka.jpg`,
+  'ख': `${CDN}/hindi_signs/hi_kha.jpg`,
+  'ग': `${CDN}/hindi_signs/hi_ga.jpg`,
+  'घ': `${CDN}/hindi_signs/hi_gha.jpg`,
+  'च': `${CDN}/hindi_signs/hi_cha.jpg`,
+  'छ': `${CDN}/hindi_signs/hi_chha.jpg`,
+  'ज': `${CDN}/hindi_signs/hi_ja.jpg`,
+  'झ': `${CDN}/hindi_signs/hi_jha.jpg`,
+  'ट': `${CDN}/hindi_signs/hi_ta2.jpg`,
+  'ठ': `${CDN}/hindi_signs/hi_tha2.jpg`,
+  'ड': `${CDN}/hindi_signs/hi_da2.jpg`,
+  'ढ': `${CDN}/hindi_signs/hi_dha2.jpg`,
+  'ण': `${CDN}/hindi_signs/hi_na2.jpg`,
+  'त': `${CDN}/hindi_signs/hi_ta.jpg`,
+  'थ': `${CDN}/hindi_signs/hi_tha.jpg`,
+  'द': `${CDN}/hindi_signs/hi_da.jpg`,
+  'ध': `${CDN}/hindi_signs/hi_dha.jpg`,
+  'न': `${CDN}/hindi_signs/hi_na.jpg`,
+  'प': `${CDN}/hindi_signs/hi_pa.jpg`,
+  'फ': `${CDN}/hindi_signs/hi_pha.jpg`,
+  'ब': `${CDN}/hindi_signs/hi_ba.jpg`,
+  'भ': `${CDN}/hindi_signs/hi_bha.jpg`,
+  'म': `${CDN}/hindi_signs/hi_ma.jpg`,
+  'य': `${CDN}/hindi_signs/hi_ya.jpg`,
+  'र': `${CDN}/hindi_signs/hi_ra.jpg`,
+  'ल': `${CDN}/hindi_signs/hi_la.jpg`,
+  'व': `${CDN}/hindi_signs/hi_va.jpg`,
+  'श': `${CDN}/hindi_signs/hi_sha.jpg`,
+  'स': `${CDN}/hindi_signs/hi_sa.jpg`,
+  'ह': `${CDN}/hindi_signs/hi_ha.jpg`,
+  'क्ष': `${CDN}/hindi_signs/hi_ksha.jpg`,
+  'ज्ञ': `${CDN}/hindi_signs/hi_gya.jpg`,
 };
 
 // ── Word GIFs (86 animated ISL gesture GIFs from satyam9090) ──────────────
@@ -130,6 +159,11 @@ export const WORD_GIFS = {
   'WHATSUP':    'whats up.gif',
   'WRONG':      'you are wrong.gif',
 };
+// Resolve word GIF filenames to full CDN URLs
+Object.keys(WORD_GIFS).forEach(k => {
+  WORD_GIFS[k] = `${WORDS_PATH}${WORD_GIFS[k]}`;
+});
+
 
 // ── Vivit word still images (76 words, landmark-overlaid, 224×224) ─────────
 // Extracted from ProcessedData_vivit .MOV files (Kaggle kaushikyh dataset)
@@ -290,13 +324,13 @@ export const HINDI_TO_ENGLISH = {
 export function lookupWord(word) {
   const key = word.toUpperCase();
 
-  // 1. Animated GIF
-  const gifFile = WORD_GIFS[key];
-  if (gifFile) {
-    return { url: `${WORDS_PATH}${gifFile}`, type: 'gif', label: key };
+  // 1. Animated GIF — WORD_GIFS values are now full CDN URLs
+  const gifUrl = WORD_GIFS[key];
+  if (gifUrl) {
+    return { url: gifUrl, type: 'gif', label: key };
   }
 
-  // 2. Vivit real landmark image
+  // 2. Vivit real landmark image (still local until CDN upload)
   const stillFile = WORD_STILLS[key];
   if (stillFile) {
     return { url: `${WORDS_VIVIT_PATH}${stillFile}`, type: 'still', label: key };
@@ -334,8 +368,8 @@ export function fingerspellHindi(word) {
     const twoChar = chars[i] + (chars[i + 1] || '') + (chars[i + 2] || '');
     const ligature = multiChar.find(l => twoChar.startsWith(l));
     if (ligature) {
-      const file = HINDI_LETTER_PATHS[ligature];
-      if (file) frames.push({ url: `${HINDI_LETTERS_PATH}${file}`, type: 'hindi_letter', label: ligature });
+      const url = HINDI_LETTER_PATHS[ligature]; // now a full CDN URL
+      if (url) frames.push({ url, type: 'hindi_letter', label: ligature });
       i += [...ligature].length;
       continue;
     }
@@ -343,8 +377,8 @@ export function fingerspellHindi(word) {
     // Skip virama (halant ्) and vowel diacritics — they attach to the previous consonant
     const skipMarks = /[\u094D\u093E-\u094C\u0902\u0903]/;
     if (!skipMarks.test(ch)) {
-      const file = HINDI_LETTER_PATHS[ch];
-      if (file) frames.push({ url: `${HINDI_LETTERS_PATH}${file}`, type: 'hindi_letter', label: ch });
+      const url = HINDI_LETTER_PATHS[ch]; // now a full CDN URL
+      if (url) frames.push({ url, type: 'hindi_letter', label: ch });
     }
     i++;
   }

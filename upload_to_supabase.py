@@ -118,23 +118,46 @@ if hindi_isl_dir.exists():
 # ── 6. HindiSignImages48x48 — 1 representative image per Devanagari letter ───
 # Each letter folder has ~1200 training images. We pick ONLY the first sorted
 # image from each folder as the representative display image for the ISL viewer.
+# IMPORTANT: Supabase Storage only allows ASCII keys — we transliterate
+# Devanagari letters to safe romanized filenames (e.g. अ → hi_a.jpg)
+DEVANAGARI_TO_ASCII = {
+    'अ': 'hi_a',    'आ': 'hi_aa',   'इ': 'hi_i',    'ई': 'hi_ii',
+    'उ': 'hi_u',    'ऊ': 'hi_uu',   'ए': 'hi_e',    'ऐ': 'hi_ai',
+    'ओ': 'hi_o',    'औ': 'hi_au',
+    'क': 'hi_ka',   'ख': 'hi_kha',  'ग': 'hi_ga',   'घ': 'hi_gha',
+    'ङ': 'hi_nga',  'च': 'hi_cha',  'छ': 'hi_chha', 'ज': 'hi_ja',
+    'झ': 'hi_jha',  'ञ': 'hi_nya',  'ट': 'hi_ta2',  'ठ': 'hi_tha2',
+    'ड': 'hi_da2',  'ढ': 'hi_dha2', 'ण': 'hi_na2',  'त': 'hi_ta',
+    'थ': 'hi_tha',  'द': 'hi_da',   'ध': 'hi_dha',  'न': 'hi_na',
+    'प': 'hi_pa',   'फ': 'hi_pha',  'ब': 'hi_ba',   'भ': 'hi_bha',
+    'म': 'hi_ma',   'य': 'hi_ya',   'र': 'hi_ra',   'ल': 'hi_la',
+    'व': 'hi_va',   'श': 'hi_sha',  'ष': 'hi_ssa',  'स': 'hi_sa',
+    'ह': 'hi_ha',   'क्ष': 'hi_ksha','त्र': 'hi_tra','ज्ञ': 'hi_gya',
+}
+
 hindi_signs_root = repo_root / "HindiSignImages48x48"
 if hindi_signs_root.exists():
     letter_folders = [d for d in sorted(hindi_signs_root.iterdir()) if d.is_dir()]
     print(f"\n🕉️   Uploading representative Hindi sign images ({len(letter_folders)} letters × 1 image)…")
     prev = upload_count
-    hindi_sign_url_map = {}  # letter → url
+    hindi_sign_url_map = {}  # Devanagari letter → CDN URL
     for folder in letter_folders:
         letter_name = folder.name  # e.g. 'अ', 'आ', etc.
         imgs = sorted([f for f in folder.iterdir() if f.suffix.lower() in (".jpg",".jpeg",".png")])
         if not imgs:
             continue
         best = imgs[0]  # first sorted image = representative
-        safe_name = letter_name + ".jpg"  # e.g. 'अ.jpg'
-        storage_path = f"hindi_signs/{safe_name}"
+
+        # Use ASCII-safe romanization for the storage key
+        ascii_name = DEVANAGARI_TO_ASCII.get(letter_name)
+        if not ascii_name:
+            print(f"   ⚠️  No ASCII mapping for '{letter_name}', skipping.")
+            continue
+        storage_path = f"hindi_signs/{ascii_name}.jpg"
         upload_file(best, storage_path)
         public_url = f"{SUPABASE_URL}/storage/v1/object/public/{BUCKET_NAME}/{storage_path}"
-        hindi_sign_url_map[letter_name] = public_url
+        hindi_sign_url_map[letter_name] = public_url   # key = original Devanagari for isl-engine lookup
+
     print(f"   Done. {upload_count - prev} new, {error_count} errors")
 
     # Save the Hindi sign URL map as JSON for use in isl-dict.js
@@ -142,6 +165,7 @@ if hindi_signs_root.exists():
     with open(out_path, "w", encoding="utf-8") as f:
         json.dump(hindi_sign_url_map, f, ensure_ascii=False, indent=2)
     print(f"\n💾  Saved Hindi sign URL map → frontend/hindi_sign_urls.json")
+
 
 # ── 7. Summary ───────────────────────────────────────────────────────────────
 print(f"\n{'='*55}")
