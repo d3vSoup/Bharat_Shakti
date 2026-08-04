@@ -1,4 +1,4 @@
-# Bharat Shakti — Blind Mode: Features, Implementation Draft & Roadmap
+# Bharat Shakti — Blind Mode: Final Implementation Draft & Roadmap
 
 > This is a living document. It captures what Blind Mode does, what it needs to do, what makes it unique, and the ultimate blueprint for building and expanding it. The feature roadmap is categorized to maximize impact, usability, and appeal during hackathon pitches.
 
@@ -27,82 +27,36 @@ Before listing features, let's think about what a blind student's school day act
 - **ENTER** reads the entire output aloud.
 - Full 26-letter English alphabet Braille mapping (`a`–`z`).
 
-### Text-to-Speech (TTS) Audio Feedback
+### Text-to-Speech (TTS) Audio Feedback & Live Feed
 - Every dot toggle announces "Dot N on/off".
 - Every committed character is spoken aloud instantly.
-- "Read All" reads the full output text.
-- Teacher broadcasts are spoken: *"Teacher says: ..."*
-
-### Live Classroom Feed (WebSocket)
-- Teacher broadcasts arrive via WebSocket and display in a Live Classroom Feed panel.
-- Each broadcast is spoken aloud automatically via TTS.
-
-### Full Keyboard Accessibility
-- All interactions work via physical keyboard (no mouse required).
-- Focus rings on all interactive elements.
-- `aria-live`, `aria-label`, `aria-pressed` attributes on all controls.
+- Teacher broadcasts arrive via WebSocket and display in a Live Classroom Feed panel, spoken aloud automatically.
 
 ---
 
-## 🔑 Core USPs — What Makes Blind Mode Unique
+## ⚙️ The Core Architecture & Engine (Technical Deep Dive)
 
-### 1. It's a Virtual Perkins Brailler, Not a Screen Reader Overlay
-Most accessibility tools are screen reader overlays (NVDA, JAWS, VoiceOver) that narrate existing visual interfaces. **We're not overlaying an existing screen — we built an entirely new Braille-native interface from scratch.** The student interacts with a **purpose-built Braille keyboard** that thinks in dots, not pixels.
+To scale this platform, we must solve fundamental hardware and performance bottlenecks.
 
-### 2. Zero Hardware Dependency
-A physical Perkins Brailler costs ₹15,000–₹45,000. Refreshable Braille displays cost ₹1,50,000+. Our virtual Perkins keyboard runs on **any laptop or tablet keyboard** — the same ₹8,000 hardware that runs Deaf Mode. No special equipment, no procurement budget.
+### 1. Defeating "Keyboard Ghosting" (The Chording Problem)
+**The Problem:** A physical Perkins Brailler requires the user to press multiple keys simultaneously (a "chord"). Standard laptop keyboards suffer from "hardware ghosting"—if a user presses S, D, F, and J at the exact same millisecond, cheap laptop hardware might drop a keystroke.
+**The Solution:** Do not rely on simultaneous absolute keydown events.
+- **Trigger Commit:** Let the user hold or tap the required dot keys in any order, and only register the Braille character when they tap the Spacebar. (Currently implemented).
+- **Alternative Rapid Buffer:** Implement a 150ms buffer window. As long as keys are pressed within that tiny frame, group them as a single chord automatically.
 
-### 3. Bidirectional Classroom Integration
-The blind student isn't isolated. **Teacher → Student**: Teacher's voice broadcasts arrive as TTS audio in real-time. **Student → Teacher**: Student types in Braille → system shows English text → teacher reads it on their screen.
+### 2. The Core Translation Engine (C++ to WASM)
+**The Problem:** JavaScript is often too slow and bloated for rapid, offline state management, especially when mapping complex Bharati Braille (Hindi) dictionaries.
+**The Solution:** Move the core Braille-to-Text translation logic out of JS and build a WebAssembly (WASM) engine.
+- Architect this using highly optimized, bare-metal C++. Because a 6-dot Braille cell has exactly 64 possible permutations, you can represent every character as a 6-bit integer (a bitmask).
+- Write a hyper-minimalist C++ script using bitwise operations and dictionary lookups, bypassing standard libraries.
+- Compile this to WASM. The browser will execute the Braille translation instantly, entirely offline, with a microscopic footprint.
 
-### 4. Audio-First Design Philosophy
-Every single interaction produces audio feedback. The student never has to wonder "did that work?" or "what did I just press?". This is not just accessibility — it's **confidence-building UX**.
-
----
-
-## 🚀 HIGH APPEAL TO JUDGES (The "Wow" Factor)
-
-These are the features that win hackathons. They are highly visual, technically impressive, and solve massive real-world problems.
-
-### A. Live Board OCR & Teacher Broadcast (Powered by Grok API / xAI)
-**What to do:** Allow a teacher to point their phone at a blackboard, extract the handwriting via Grok Vision, and broadcast it to the blind student as audio and a Braille-ready document.
-
-**How to do it (Steps):**
-1. **Camera Capture:** Build a hidden teacher page that accesses the webcam (`navigator.mediaDevices.getUserMedia`).
-2. **Frame Extraction:** Use a `<canvas>` to capture a frame every 5 seconds.
-3. **Send to Grok API:** Base64 encode the image and send it to the **xAI Grok API** (which supports fast multimodal vision) with the prompt: *"Extract all handwritten text on this board. Output only the text."*
-4. **Broadcast via WebSocket:** Send the extracted text through the existing FastAPI WebSocket channel to the blind student.
-5. **Render:** The blind student's frontend receives it, logs it, and `tts()` reads it aloud automatically.
-
-**Resources & Links:**
-- [xAI Grok API Documentation](https://console.xai.com/docs)
-- [MDN WebRTC / getUserMedia Tutorial](https://developer.mozilla.org/en-US/docs/Web/API/Media_Capture_and_Streams_API/Taking_still_photos)
-- [FastAPI WebSockets Guide](https://fastapi.tiangolo.com/advanced/websockets/)
-
-### B. Braille-to-Text Exam Mode with PDF Export
-**What to do:** Let the blind student write an exam in Braille and generate a perfectly formatted English/Hindi PDF for the teacher to grade.
-
-**How to do it (Steps):**
-1. **Build the UI:** Add a "Start Exam" button that locks the screen and starts a visible/audible countdown timer.
-2. **Auto-Save:** Save the `outputText` to `localStorage` every 10 seconds to prevent data loss.
-3. **Generate PDF:** Integrate `jsPDF`. When the student hits "Submit", take the English text, add a header (Name, Date, Word Count), and generate a PDF blob.
-4. **Download/Send:** Trigger an automatic download of the PDF.
-
-**Resources & Links:**
-- [jsPDF Library (GitHub)](https://github.com/parallax/jsPDF)
-- [Using LocalStorage (MDN)](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage)
-
-### C. Spatial Audio & Earcons (Sound Design)
-**What to do:** Blind users navigate the world via sound. Replace basic TTS with a rich, spatial audio environment where UI elements have distinct sounds (Earcons).
-
-**How to do it (Steps):**
-1. **Audio Context:** Initialize `const audioCtx = new (window.AudioContext || window.webkitAudioContext)();`
-2. **Create Oscillators:** Synthesize short "clicks" for the Braille keys.
-3. **Spatial Panning:** Use `StereoPannerNode`. Left hand keys (`S, D, F`) pan to `-1.0` (Left ear). Right hand keys (`J, K, L`) pan to `1.0` (Right ear).
-4. **Chimes:** Play a pleasant chord when `SPACE` (commit) is pressed.
-
-**Resources & Links:**
-- [Web Audio API Spatialization (MDN)](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API/Web_audio_spatialization_basics)
+### 3. Visualizing the Output (The Dual-Display)
+**The Problem:** If the student types in Braille but the screen only shows English letters, it disconnects the learning experience and makes it harder for the teacher to understand *how* the student is typing.
+**The Solution:** Use the Unicode Braille Patterns block (`U+2800` to `U+28FF`).
+- When a chord is committed, the UI must immediately render the visual Braille dots on the screen.
+- Directly underneath the Braille dots, render the translated English or Hindi text.
+- This dual-display proves to judges that the translation engine works accurately on a character-by-character basis.
 
 ---
 
@@ -110,55 +64,62 @@ These are the features that win hackathons. They are highly visual, technically 
 
 These features take the app from a "cool prototype" to a genuinely usable tool.
 
-### D. Complete Braille Character Set (Numbers, Caps, Punctuation)
-**What to do:** Expand the current 26-letter virtual Perkins keyboard (`a-z`) to support numbers (using the number indicator `⠼`), capital letters (using the cap indicator `⠠`), and punctuation. Without these, a student can't write a math answer, date, or proper sentence.
+### A. Complete Character Set & The "Sticky" Modifiers
+**What to do:** Expand the keyboard to support numbers and capital letters. In Braille, these aren't separate keys; they are prefixes.
+**Implementation:** Build a simple state machine in JavaScript that intercepts the stroke.
+- If the student types `⠼` (dots 3-4-5-6), set `isNumberMode = true` (a "sticky state"). The very next letter typed (`a` through `j`) is mathematically parsed as a number (`1` through `0`).
+- Repeat for the Capital indicator `⠠` (dot 6).
 
-**How to do it (Steps):**
-1. **Update State Management:** Modify `commit()` in `blind.html` to track "modes". If the student types `dots 3-4-5-6` (number indicator), set a flag `isNumberMode = true`.
-2. **Handle Next Keystroke:** If `isNumberMode` is true, map `a-j` (dots 1-0) to digits `1-9, 0`.
-3. **Punctuation Dictionary:** Add punctuation patterns to the `BRAILLE` JS object (e.g., `"010011": "."` for period).
-
-**Resources & Links:**
-- [Standard English Braille Chart (Braille Authority)](https://www.brailleauthority.org/)
-
-### E. Bharati Braille (Hindi Braille) Support
-**What to do:** Implement Bharati Braille, the unified braille standard for Indian languages. 
-
-**How to do it (Steps):**
-1. **Add Language Toggle:** Create a UI button (and keyboard shortcut like `Ctrl+L`) to toggle between English and Hindi Braille modes.
-2. **Create Bharati Dictionary:** Map 6-dot patterns to Devanagari Unicode characters (e.g., `dots 1-3` = "क").
-3. **Matra Logic:** Handle Hindi vowels (Matras) which attach to consonants. When a consonant is followed by a matra braille pattern, combine them into a single Devanagari character string before rendering.
-
-**Resources & Links:**
-- [Bharati Braille Chart (Wikipedia)](https://en.wikipedia.org/wiki/Bharati_Braille)
+### B. Bharati Braille Translator (Massive USP)
+**What to do:** Instantly toggle the Perkins keyboard from English Grade-1 to Hindi Devanagari.
+**Implementation:** Do not overcomplicate with ML. Bharati Braille maps directly to Devanagari Unicode. Build a robust dictionary mapping 6-dot arrays to Hindi Unicode characters (e.g., `dots 1-3` = `\u0915` for क).
+- **GitHub Reference:** [evoluteur/braille-tools](https://github.com/evoluteur/braille-tools). Fork their array logic and replace English string outputs with Devanagari Unicode strings for an instant Bharati Braille parser.
 
 ---
 
-## 💡 IMPORTANT (UX Polish)
+## 🚀 HIGH APPEAL TO JUDGES (The "Wow" Factor)
 
-### F. Voice-to-Braille Converter (Learning Mode)
-**What to do:** Allow the student to speak a word and hear/see how it is spelled in Braille dots.
-**How to do it (Steps):** Use `webkitSpeechRecognition` to capture voice, map recognized letters to the `BRAILLE` dictionary, and use TTS to spell it out ("H is dots 1 2 5...").
-- [Web Speech API Docs](https://developer.mozilla.org/en-US/docs/Web/API/SpeechRecognition)
+### C. 3D Spatial Earcons (Never Done Before in SIH)
+**What to do:** Standard TTS is too slow for a fast typist. Replace spoken "Dot 1" feedback with instantaneous, spatial audio cues.
+**Implementation:** Abandon standard HTML `<audio>` tags. Use the native Web Audio API (`OscillatorNode`) to synthesize tones directly in the browser with zero latency.
+- Map Dot 1 to a high-pitched "ping" in the left ear. Map Dot 6 to a low-pitched "thud" in the right ear. The student learns to type by melody and physical ear location, making it 10x faster.
+- **GitHub Reference:** [Tone.js](https://github.com/Tonejs/Tone.js). A Web Audio framework that makes creating synths and panning left/right incredibly easy.
 
-### G. Full Keyboard Audio Navigation
-**What to do:** Ensure a blind user never has to use a mouse.
-**How to do it (Steps):** Add `keydown` listeners for shortcuts: `Ctrl+1` (Focus Keyboard), `Ctrl+2` (Focus Output). Ensure every HTML section has `aria-live="polite"`.
+### D. Live Board OCR & Teacher Broadcast Sync
+**What to do:** The teacher has a simple text input box labeled "Whiteboard", or points their phone camera at a physical board (using **Grok API / Gemini Vision API** to extract text).
+**Implementation:** Rely purely on the existing FastAPI WebSocket architecture.
+- Add a dedicated payload type (`type: 'BOARD_NOTE'`) that intercepts the student's typing session and forces a high-priority TTS read-out.
+- This ensures the blind student never misses visual board notes.
+
+### E. Client-Side Exam Exporter
+**What to do:** The blind student takes their exam entirely in Braille. Hitting "Submit" generates a formatted PDF containing both English translation and visual Braille dots.
+**Implementation:** Generate the PDF entirely on the client side (do not send to a backend; it will timeout on bad Wi-Fi).
+- **GitHub Reference:** [MrRio/jsPDF](https://github.com/parallax/jsPDF). Pass your translated English state string and Braille Unicode string into jsPDF to generate a printable file instantly.
+
+---
+
+## 💡 IMPORTANT (UX Polish & Expansion)
+
+### F. Voice-to-Braille Reverse Trainer
+**What to do:** An active learning loop where a student holds Spacebar, speaks a word like "Apple", and the system verbally breaks down the exact Braille dot patterns required to spell it.
+**Implementation:** Use the native `SpeechRecognition API` to capture the word, run it through the English-to-Braille JS array, and use `SpeechSynthesis` to read out the required dot arrays.
+
+### G. Expanded Keyboard Navigation
+**What to do:** Assign more keys on the standard keyboard to ensure full accessibility without a mouse.
+**Implementation:** 
+- `Ctrl+1/2/3` for section jumping.
+- Arrow keys for navigating the Dual-Display output (reading back character by character).
+- Use `aria-live` regions aggressively.
 
 ---
 
 ## 🌠 MOONSHOTS (The Future Vision)
 
-### H. AI Study Companion
-A voice-activated AI assistant embedded in Blind Mode. *"Summarise today's lesson"* reads a summary of all classroom broadcasts using the **Grok API**. *"What's 7 × 8?"* translates the answer into Braille dot patterns.
+### H. Physical Refreshable Braille Display Integration
+Use the **WebHID API** to connect the browser directly to physical USB/Bluetooth Braille displays (like the Orbit Reader). This allows Bharat Shakti to act as the software engine for expensive hardware.
 
-### I. Physical Refreshable Braille Display Integration (WebHID)
-For schools that DO have refreshable Braille displays (rare but growing), use the **WebHID API** to connect to USB/Bluetooth Braille displays directly from the browser. Output text to the physical pins in real-time.
-- [WebHID API Documentation](https://developer.mozilla.org/en-US/docs/Web/API/WebHID_API)
-
-### J. Nemeth Braille for Mathematics
-Math is the hardest subject for Braille users. Build a Nemeth math entry mode where the student can type equations (`⠭⠘⠆` = x²) directly in Braille, which renders via MathJax.
-- [Nemeth Braille Rules](https://www.brl.org/nemeth/)
+### I. Nemeth Braille for Mathematics
+Implement Nemeth Braille so students can type algebraic equations and calculus directly into the browser, rendering it visually via MathJax for the teacher.
 
 ---
 
@@ -171,22 +132,17 @@ Math is the hardest subject for Braille users. Build a Nemeth math entry mode wh
 | Bharati (Hindi) Braille | 🔜 Planned | ❌ | ❌ | Partial |
 | Zero hardware needed | ✅ | ✅ | ✅ | ❌ (needs display) |
 | Live classroom WebSocket | ✅ | ❌ | ❌ | ❌ |
-| Teacher broadcast → TTS | ✅ | ❌ | ❌ | ❌ |
-| Student Braille → Teacher text | ✅ | ❌ | ❌ | ❌ |
-| PDF textbook reader | 🔜 Planned | Partial | ✅ | ❌ |
-| Math (Nemeth Braille) | 🔜 Planned | ❌ | ❌ | ❌ |
-| Audio-first design | ✅ Every action | Overlay | Overlay | Partial |
+| Audio-first design | ✅ Earcons | Overlay | Overlay | Partial |
 
 ---
 
-## 📋 Hackathon Pitch Cheat Sheet (Blind Mode)
+## 📅 The 72-Hour Division of Labor (Sprint Plan)
 
-If a judge asks *"Why did you build Blind Mode like this?"*, use these points:
-1. **"We didn't build a screen reader; we built a native Braille environment."** (Emphasizes that you understand blind UX is different from sighted UX).
-2. **"It replaces ₹45,000 hardware with an ₹8,000 laptop."** (Emphasizes affordability and scale for India).
-3. **"It's bi-directional."** (The student isn't just listening; they are typing back to the teacher).
-4. **"Bharati Braille natively supports the 22 scheduled languages of India."** (Emphasizes the localization and "Bharat" aspect).
-5. **"We leveraged Grok API for real-time board extraction."** (Shows cutting-edge multimodal AI use).
+To execute this during a hackathon, divide the team:
+
+- **Member 1 (Linguistics & Core):** Map the Devanagari Unicode array for Bharati Braille, implement the "sticky" modifier logic for numbers/caps, and build the Dual-Display visualizer. *(Optional: Write the C++ bitmask engine and compile to WASM).*
+- **Member 2 (Audio & UX):** Build the Web Audio API / `Tone.js` spatial earcons, map them to the 6 virtual keys, and implement the Voice-to-Braille Reverse Trainer.
+- **Member 3 (Architecture & APIs):** Implement the `jsPDF` export for Exam Mode, wire up the Teacher's Board WebSocket payload, and integrate the Grok Vision API for board OCR.
 
 ---
 
