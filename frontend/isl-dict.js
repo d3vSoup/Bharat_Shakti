@@ -17,7 +17,7 @@ const CDN = 'https://cnwsrgqlpvxxnwsndhsm.supabase.co/storage/v1/object/public/i
 
 const LETTERS_PATH       = `${CDN}/letters/`;
 const WORDS_PATH         = `${CDN}/words/`;
-const WORDS_VIVIT_PATH   = '/isl_gestures/words_vivit/'; // still local (not yet on CDN)
+const WORDS_VIVIT_PATH   = `${CDN}/words_vivit/`;
 const HINDI_LETTERS_PATH = `${CDN}/hindi_letters/`;
 
 // ── English Alphabet fingerspelling — 384×384 real high-contrast photos ─────
