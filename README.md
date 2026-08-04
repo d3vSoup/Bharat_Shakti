@@ -3,7 +3,8 @@
   
   # 🇮🇳 Bharat Shakti
   
-  **Inclusivity is not a setting you toggle—it is an adaptive environment.** <br>
+  [![Typing SVG](https://readme-typing-svg.demolab.com?font=Atkinson+Hyperlegible+Next&weight=700&size=24&pause=1000&color=7C5800&center=true&vCenter=true&width=600&lines=Empowering+Deaf+Classrooms;Empowering+Blind+Classrooms;Inclusivity+is+not+a+toggle)](https://git.io/typing-svg)
+  
   *A unified platform empowering Deaf and Blind students in Indian classrooms.*
   
   <br>
