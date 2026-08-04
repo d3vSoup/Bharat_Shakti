@@ -699,13 +699,22 @@
 
   micBtn.addEventListener('click', () => isRecording ? stopRecording() : startRecording());
 
+  /* ── Environment & Backend Host Configuration ──────── */
+  const IS_LOCAL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  // Override this with your live Render backend domain after deploying to Render
+  const PRODUCTION_BACKEND = window.RENDER_BACKEND_URL || 'bharat-shakti-backend.onrender.com';
+  
+  const BACKEND_HOST = IS_LOCAL ? 'localhost:8000' : PRODUCTION_BACKEND;
+  const BACKEND_HTTP = IS_LOCAL ? 'http://localhost:8000' : `https://${PRODUCTION_BACKEND}`;
+  const BACKEND_WS   = IS_LOCAL ? 'ws://localhost:8000'   : `wss://${PRODUCTION_BACKEND}`;
+
   /* ── Google Translate Language Detection ────────────── */
   async function detectLang(text) {
     // Fast path: Devanagari chars = definitely Hindi
     if (/[\u0900-\u097F]/.test(text)) return 'hi';
     // Call backend /detect-lang which uses Google Translate API
     try {
-      const res = await fetch(`/detect-lang?text=${encodeURIComponent(text.slice(0,200))}`);
+      const res = await fetch(`${BACKEND_HTTP}/detect-lang?text=${encodeURIComponent(text.slice(0,200))}`);
       if (res.ok) {
         const data = await res.json();
         console.log('[LangDetect]', data.source, '→', data.lang, data.confidence);
@@ -718,6 +727,36 @@
     const words = new Set(text.toLowerCase().split(/\s+/));
     for (const w of words) { if (hinglish.has(w)) return 'hi'; }
     return currentLang === 'hi' ? 'hi' : 'en';
+  }
+
+  /* ── WebSocket ───────────────────────────────────── */
+  let socket;
+  const wsDot  = document.getElementById('wsDot');
+  const wsText = document.getElementById('wsText');
+
+  function setWsState(state) {
+    const map = {
+      online:     ['bg-primary',  'Connected'],
+      error:      ['bg-error',    'Disconnected'],
+      connecting: ['bg-outline',  'Connecting…']
+    };
+    const [dotCls, label] = map[state] || map.connecting;
+    wsDot.className = `w-2 h-2 rounded-full inline-block ${dotCls}`;
+    wsText.textContent = label;
+  }
+
+  function connectWS() {
+    setWsState('connecting');
+    socket = new WebSocket(`${BACKEND_WS}/ws/student/deaf`);
+    socket.onopen    = () => setWsState('online');
+    socket.onmessage = e => {
+      const d = JSON.parse(e.data);
+      if (d.type === 'broadcast' && d.text) {
+        addTranscriptEntry(d.text, d.lang || 'en');
+        renderISL(d.text, d.lang || 'en');
+      }
+    };
+    socket.onclose = () => { setWsState('error'); setTimeout(connectWS, 3000); };
   }
 
   /* ── Core Broadcast & Render ──────────────────────── */
@@ -871,36 +910,6 @@
           (curGesture?.type === 'gif' || curGesture?.type === 'still') ? 'contain' : 'cover';
       }
     );
-  }
-
-  /* ── WebSocket ───────────────────────────────────── */
-  let socket;
-  const wsDot  = document.getElementById('wsDot');
-  const wsText = document.getElementById('wsText');
-
-  function setWsState(state) {
-    const map = {
-      online:     ['bg-primary',  'Connected'],
-      error:      ['bg-error',    'Disconnected'],
-      connecting: ['bg-outline',  'Connecting…']
-    };
-    const [dotCls, label] = map[state] || map.connecting;
-    wsDot.className = `w-2 h-2 rounded-full inline-block ${dotCls}`;
-    wsText.textContent = label;
-  }
-
-  function connectWS() {
-    setWsState('connecting');
-    socket = new WebSocket('ws://localhost:8000/ws/student/deaf');
-    socket.onopen    = () => setWsState('online');
-    socket.onmessage = e => {
-      const d = JSON.parse(e.data);
-      if (d.type === 'broadcast' && d.text) {
-        addTranscriptEntry(d.text, d.lang || 'en');
-        renderISL(d.text, d.lang || 'en');
-      }
-    };
-    socket.onclose = () => { setWsState('error'); setTimeout(connectWS, 3000); };
   }
 
   window.addEventListener('load', () => {
