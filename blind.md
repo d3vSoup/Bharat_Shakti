@@ -136,13 +136,30 @@ Implement Nemeth Braille so students can type algebraic equations and calculus d
 
 ---
 
-## 📅 The 72-Hour Division of Labor (Sprint Plan)
+## 🛠️ Developer Resources & Tooling Map
 
-To execute this during a hackathon, divide the team:
+To build these features quickly, teammates should leverage these existing libraries, datasets, and APIs instead of reinventing the wheel.
 
-- **Member 1 (Linguistics & Core):** Map the Devanagari Unicode array for Bharati Braille, implement the "sticky" modifier logic for numbers/caps, and build the Dual-Display visualizer. *(Optional: Write the C++ bitmask engine and compile to WASM).*
-- **Member 2 (Audio & UX):** Build the Web Audio API / `Tone.js` spatial earcons, map them to the 6 virtual keys, and implement the Voice-to-Braille Reverse Trainer.
-- **Member 3 (Architecture & APIs):** Implement the `jsPDF` export for Exam Mode, wire up the Teacher's Board WebSocket payload, and integrate the Grok Vision API for board OCR.
+### 1. Braille Logic & Translation Engine
+- **GitHub:** [evoluteur/braille-tools](https://github.com/evoluteur/braille-tools) — Lightweight JS library for mapping and displaying Grade 1 English Braille. Fork this for the Bharati Braille engine.
+- **Reference:** [Bharati Braille Devanagari Mapping](https://en.wikipedia.org/wiki/Bharati_Braille#Devanagari) — The exact dot-to-Unicode mapping needed for the Hindi translator.
+- **Tutorial:** [Compiling C++ to WebAssembly (MDN)](https://developer.mozilla.org/en-US/docs/WebAssembly/C_to_wasm) — If a teammate builds the C++ bitmask engine, use Emscripten to compile it for the browser.
+
+### 2. Spatial Audio & Speech (Earcons & Reverse Trainer)
+- **GitHub:** [Tone.js](https://github.com/Tonejs/Tone.js) — The ultimate Web Audio framework. Makes synthesizing pitches and left/right panning trivial (for the 3D Spatial Earcons).
+- **Documentation:** [Web Audio API: StereoPannerNode](https://developer.mozilla.org/en-US/docs/Web/API/StereoPannerNode) — Native browser API for spatial audio.
+- **Documentation:** [Web Speech API (SpeechRecognition)](https://developer.mozilla.org/en-US/docs/Web/API/SpeechRecognition) — Native browser API to capture spoken words for the Voice-to-Braille Reverse Trainer.
+
+### 3. Board OCR & Computer Vision
+- **API Docs:** [xAI Grok API](https://console.xai.com/docs) — Use Grok Vision for fast multimodal extraction of the teacher's whiteboard.
+- **API Docs:** [Gemini Vision API (Alternative)](https://ai.google.dev/docs/gemini_api_developer_guide) — Backup vision API for board OCR.
+- **GitHub:** [naptha/tesseract.js](https://github.com/naptha/tesseract.js) — If internet drops, run offline OCR in the browser using WASM (slower, but works without API keys).
+- **Kaggle Dataset:** [Handwritten Hindi & English Words](https://www.kaggle.com/datasets/sudalairajkumar/hindi-character-recognition) — If we train our own lightweight OCR model later, use this.
+
+### 4. Exam Exporter & Architecture
+- **GitHub:** [MrRio/jsPDF](https://github.com/parallax/jsPDF) — The gold standard for client-side PDF generation. Feed it the English output and the Unicode Braille Patterns to generate the exam PDF.
+- **Reference:** [Unicode Braille Patterns (U+2800 to U+28FF)](https://en.wikipedia.org/wiki/Braille_Patterns) — The exact hex codes needed for the Dual-Display visualizer.
+- **Tutorial:** [FastAPI WebSockets](https://fastapi.tiangolo.com/advanced/websockets/) — For broadcasting the Teacher's Board OCR payload to the blind student's client.
 
 ---
 
