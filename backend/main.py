@@ -2,13 +2,26 @@ import json
 import urllib.request
 import urllib.parse
 from typing import List
+from pathlib import Path
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import os
 
+# Load .env from repo root
+try:
+    from dotenv import load_dotenv
+    load_dotenv(Path(__file__).parent.parent / ".env")
+except ImportError:
+    pass  # dotenv optional; fall back to system env vars
+
+SUPABASE_URL      = os.environ.get("SUPABASE_URL", "")
+SUPABASE_ANON_KEY = os.environ.get("SUPABASE_ANON_KEY", "")
+SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY", "")  # backend-only, never exposed
+
 app = FastAPI(title="Bharat Shakti - Inclusive Classroom Backend")
+
 
 # Enable CORS for frontend integration
 app.add_middleware(
@@ -19,7 +32,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+# ── Public config endpoint (safe — anon key only, no service key) ─────────────
+@app.get("/config")
+def get_config():
+    """Expose public Supabase credentials to frontend. Service key is NEVER included."""
+    return JSONResponse({
+        "supabaseUrl":     SUPABASE_URL,
+        "supabaseAnonKey": SUPABASE_ANON_KEY,
+    })
+
+
 class ConnectionManager:
+
     def __init__(self):
         # Keep track of active connections categorized by student type / teacher
         self.active_connections: List[WebSocket] = []
