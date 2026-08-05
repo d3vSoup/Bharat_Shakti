@@ -94,6 +94,10 @@
         <span class="w-2 h-2 bg-outline rounded-full inline-block" id="wsDot"></span>
         <span id="wsText">Connecting…</span>
       </div>
+      <button id="langToggleBtn" onclick="toggleLanguage()" class="flex items-center gap-1.5 border-2 border-on-surface px-3 py-1.5 rounded-sm bg-primary-container text-sm font-bold text-on-primary-fixed hover:brightness-95 transition-all paper-shadow-sm cursor-pointer" aria-label="Toggle Braille Language Mode (Alt+L)">
+        <span class="material-symbols-outlined text-base">translate</span>
+        <span id="langBtnText">Mode: English</span>
+      </button>
       <a href="deaf.html" class="bg-surface border-2 border-on-surface px-3 py-1.5 text-sm font-bold text-on-surface hover:bg-secondary-container transition-colors rounded-sm">Switch: Deaf Mode</a>
     </div>
   </div>
@@ -107,12 +111,15 @@
 
       <!-- Keyboard card -->
       <div class="bg-surface border-2 border-on-surface paper-shadow p-6">
-        <div class="border-b-2 border-on-surface pb-4 mb-6">
-          <h1 class="font-headline-md text-2xl font-bold text-on-surface flex items-center gap-2">
-            <span class="material-symbols-outlined text-on-tertiary-container text-2xl">braille</span>
-            Perkins Keyboard
-          </h1>
-          <p class="text-sm text-on-surface-variant mt-1">6-dot Braille cell emulator</p>
+        <div class="border-b-2 border-on-surface pb-4 mb-6 flex justify-between items-start">
+          <div>
+            <h1 class="font-headline-md text-2xl font-bold text-on-surface flex items-center gap-2">
+              <span class="material-symbols-outlined text-on-tertiary-container text-2xl">braille</span>
+              Perkins Keyboard
+            </h1>
+            <p class="text-sm text-on-surface-variant mt-1">6-dot Braille cell emulator</p>
+          </div>
+          <span id="modeBadge" class="bg-tertiary-container border border-on-surface px-2.5 py-0.5 rounded-full text-xs font-bold text-on-tertiary-container uppercase tracking-wider">English Grade 1</span>
         </div>
 
         <!-- Dot grid -->
@@ -195,9 +202,13 @@
             <kbd class="bg-surface-container border border-outline px-2 py-0.5 rounded text-on-surface font-mono text-xs">↵ ENTER</kbd>
             <span class="text-on-surface-variant">Read all aloud</span>
           </div>
-          <div class="flex justify-between items-center">
+          <div class="flex justify-between items-center border-b border-outline-variant pb-2">
             <kbd class="bg-surface-container border border-outline px-2 py-0.5 rounded text-on-surface font-mono text-xs">⌫ BACKSPACE</kbd>
             <span class="text-on-surface-variant">Delete last</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <kbd class="bg-surface-container border border-outline px-2 py-0.5 rounded text-on-surface font-mono text-xs">Alt + L</kbd>
+            <span class="text-on-surface-variant">Switch Language</span>
           </div>
         </div>
       </div>
@@ -257,13 +268,62 @@
 </footer>
 
 <script>
-  /* ── Braille map ─────────────────────────────────── */
-  const BRAILLE = {
+  /* ── Braille maps ─────────────────────────────────── */
+  const BRAILLE_EN = {
     "100000":"a","110000":"b","100100":"c","100110":"d","100010":"e",
     "110100":"f","110110":"g","110010":"h","010100":"i","010110":"j",
     "101000":"k","111000":"l","101100":"m","101110":"n","101010":"o",
     "111100":"p","111110":"q","111010":"r","011100":"s","011110":"t",
     "101001":"u","111001":"v","010111":"w","101101":"x","101111":"y","101011":"z"
+  };
+  const BRAILLE_HI = {
+    // Vowels
+    "100000": "अ",  // dot 1
+    "001110": "आ",  // dots 3-4-5
+    "010100": "इ",  // dots 2-4
+    "001010": "ई",  // dots 3-5
+    "101001": "उ",  // dots 1-3-6
+    "110011": "ऊ",  // dots 1-2-5-6
+    "100010": "ए",  // dots 1-5
+    "001100": "ऐ",  // dots 3-4
+    "101010": "ओ",  // dots 1-3-5
+    "010101": "औ",  // dots 2-4-6
+    "000011": "अं", // dots 5-6 (Anusvara)
+    "100001": "अः", // dots 1-6 (Visarga)
+    
+    // Consonants
+    "101000": "क",  // dots 1-3
+    "000101": "ख",  // dots 4-6
+    "110110": "ग",  // dots 1-2-4-5
+    "110001": "घ",  // dots 1-2-6
+    "001101": "ङ",  // dots 3-4-6
+    "100100": "च",  // dots 1-4
+    "100101": "छ",  // dots 1-4-6
+    "010110": "ज",  // dots 2-4-5
+    "001011": "झ",  // dots 3-5-6
+    "010010": "ञ",  // dots 2-5
+    "011111": "ट",  // dots 2-3-4-5-6
+    "010111": "ठ",  // dots 2-4-5-6
+    "110101": "ड",  // dots 1-2-4-6
+    "111111": "ढ",  // dots 1-2-3-4-5-6
+    "001111": "ण",  // dots 3-4-5-6
+    "100110": "त",  // dots 1-4-5
+    "100111": "थ",  // dots 1-4-5-6
+    "110010": "द",  // dots 1-2-5
+    "011101": "ध",  // dots 2-3-4-6
+    "101110": "न",  // dots 1-3-4-5
+    "111100": "प",  // dots 1-2-3-4
+    "011010": "फ",  // dots 2-3-5
+    "110000": "ब",  // dots 1-2
+    "000110": "भ",  // dots 4-5
+    "101100": "म",  // dots 1-3-4
+    "101111": "य",  // dots 1-3-4-5-6
+    "111010": "र",  // dots 1-2-3-5
+    "111000": "ल",  // dots 1-2-3
+    "111001": "व",  // dots 1-2-3-6
+    "111101": "ष",  // dots 1-2-3-4-6
+    "011100": "स",  // dots 2-3-4
+    "110111": "ह"   // dots 1-2-4-5-6
   };
   const NUMBERS = {
     "a":"1","b":"2","c":"3","d":"4","e":"5",
@@ -271,16 +331,34 @@
   };
   const KEY_MAP = { f:1, d:2, s:3, j:4, k:5, l:6 };
   const dotState = { 1:false,2:false,3:false,4:false,5:false,6:false };
+  let currentLang = 'en'; // 'en' or 'hi'
   let isCapitalMode = false;
   let isNumberMode = false;
   let outputText = '';
   let outputIsEmpty = true;
 
+  /* ── Language Switcher ────────────────────────────── */
+  function toggleLanguage() {
+    currentLang = (currentLang === 'en') ? 'hi' : 'en';
+    const btnText = document.getElementById('langBtnText');
+    const badge = document.getElementById('modeBadge');
+    if (currentLang === 'hi') {
+      if (btnText) btnText.textContent = 'Mode: Bharati (Hindi)';
+      if (badge) badge.textContent = 'Bharati Braille (Hindi)';
+      tts('Switched to Bharati Hindi Braille mode', 'en-IN');
+    } else {
+      if (btnText) btnText.textContent = 'Mode: English';
+      if (badge) badge.textContent = 'English Grade 1';
+      tts('Switched to English Braille mode', 'en-IN');
+    }
+  }
+
   /* ── TTS ─────────────────────────────────────────── */
-  function tts(msg) {
+  function tts(msg, langOverride) {
     window.speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(msg);
-    u.lang = 'en-IN'; window.speechSynthesis.speak(u);
+    u.lang = langOverride || (currentLang === 'hi' ? 'hi-IN' : 'en-IN');
+    window.speechSynthesis.speak(u);
   }
 
   /* ── Sync visuals ────────────────────────────────── */
@@ -311,7 +389,7 @@
   function toggleDot(n) {
     dotState[n] = !dotState[n];
     syncVisuals();
-    tts(`Dot ${n} ${dotState[n]?'on':'off'}`);
+    tts(`Dot ${n} ${dotState[n]?'on':'off'}`, 'en-IN');
   }
 
   /* ── Commit character ────────────────────────────── */
@@ -329,24 +407,26 @@
       isNumberMode = !isNumberMode;
       char = isNumberMode ? 'Number mode on' : 'Number mode off';
     } else {
-      let rawChar = BRAILLE[sig] || null;
+      let activeMap = (currentLang === 'hi') ? BRAILLE_HI : BRAILLE_EN;
+      let rawChar = activeMap[sig] || null;
       if (rawChar) {
         if (isNumberMode) {
-          char = NUMBERS[rawChar] || null;
+          let numKey = (currentLang === 'hi') ? BRAILLE_EN[sig] : rawChar;
+          char = NUMBERS[numKey] || null;
           if (char) {
             outputText += char;
             isNumberMode = false;
           } else {
-            tts('Unknown number mapping');
+            tts('Unknown number mapping', 'en-IN');
             char = '';
           }
         } else {
-          char = isCapitalMode ? rawChar.toUpperCase() : rawChar;
+          char = (currentLang === 'en' && isCapitalMode) ? rawChar.toUpperCase() : rawChar;
           outputText += char;
           isCapitalMode = false;
         }
       } else {
-        tts('Unknown pattern');
+        tts('Unknown pattern', 'en-IN');
       }
     }
 
@@ -373,13 +453,18 @@
     const box = document.getElementById('outputBox');
     box.textContent = 'Start typing with the Perkins keys…';
     box.className = 'min-h-28 bg-surface-container border-2 border-dashed border-outline p-4 rounded-sm font-mono text-2xl tracking-widest text-on-surface leading-relaxed text-on-surface-variant italic text-sm';
-    tts('Cleared');
+    tts('Cleared', 'en-IN');
   }
 
   function readAll() { tts(outputText.trim() || 'Output is empty'); }
 
   /* ── Keyboard ────────────────────────────────────── */
   window.addEventListener('keydown', e => {
+    if (e.altKey && e.key.toLowerCase() === 'l') {
+      e.preventDefault();
+      toggleLanguage();
+      return;
+    }
     const key = e.key.toLowerCase();
     if (KEY_MAP.hasOwnProperty(key)) { e.preventDefault(); toggleDot(KEY_MAP[key]); }
     else if (e.code === 'Space')   { e.preventDefault(); commit(); }
