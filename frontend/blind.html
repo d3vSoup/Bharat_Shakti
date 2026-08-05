@@ -265,8 +265,14 @@
     "111100":"p","111110":"q","111010":"r","011100":"s","011110":"t",
     "101001":"u","111001":"v","010111":"w","101101":"x","101111":"y","101011":"z"
   };
+  const NUMBERS = {
+    "a":"1","b":"2","c":"3","d":"4","e":"5",
+    "f":"6","g":"7","h":"8","i":"9","j":"0"
+  };
   const KEY_MAP = { f:1, d:2, s:3, j:4, k:5, l:6 };
   const dotState = { 1:false,2:false,3:false,4:false,5:false,6:false };
+  let isCapitalMode = false;
+  let isNumberMode = false;
   let outputText = '';
   let outputIsEmpty = true;
 
@@ -313,8 +319,36 @@
     let sig = '';
     for (let i = 1; i <= 6; i++) sig += dotState[i]?'1':'0';
     let char = '';
-    if (sig === '000000') { outputText += ' '; char = 'Space'; }
-    else { char = BRAILLE[sig] || null; if (char) outputText += char; else tts('Unknown pattern'); }
+    if (sig === '000000') { 
+      outputText += ' '; 
+      char = 'Space'; 
+    } else if (sig === '000001') { // dot 6 alone: Capital indicator
+      isCapitalMode = !isCapitalMode;
+      char = isCapitalMode ? 'Capital on' : 'Capital off';
+    } else if (sig === '001111') { // dots 3-4-5-6: Number indicator
+      isNumberMode = !isNumberMode;
+      char = isNumberMode ? 'Number mode on' : 'Number mode off';
+    } else {
+      let rawChar = BRAILLE[sig] || null;
+      if (rawChar) {
+        if (isNumberMode) {
+          char = NUMBERS[rawChar] || null;
+          if (char) {
+            outputText += char;
+            isNumberMode = false;
+          } else {
+            tts('Unknown number mapping');
+            char = '';
+          }
+        } else {
+          char = isCapitalMode ? rawChar.toUpperCase() : rawChar;
+          outputText += char;
+          isCapitalMode = false;
+        }
+      } else {
+        tts('Unknown pattern');
+      }
+    }
 
     // flash
     for (let i = 1; i <= 6; i++) {
@@ -329,11 +363,13 @@
       box.className = 'min-h-28 bg-surface-container border-2 border-dashed border-outline p-4 rounded-sm font-mono text-2xl tracking-widest text-on-surface leading-relaxed';
       outputIsEmpty = false;
     }
-    if (char) tts(char === 'Space' ? 'Space' : char);
+    if (char) tts(char);
   }
 
   function clearOutput() {
     outputText = ''; outputIsEmpty = true;
+    isCapitalMode = false;
+    isNumberMode = false;
     const box = document.getElementById('outputBox');
     box.textContent = 'Start typing with the Perkins keys…';
     box.className = 'min-h-28 bg-surface-container border-2 border-dashed border-outline p-4 rounded-sm font-mono text-2xl tracking-widest text-on-surface leading-relaxed text-on-surface-variant italic text-sm';
