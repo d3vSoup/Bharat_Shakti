@@ -806,9 +806,13 @@
     wsText.textContent = label;
   }
 
+  const IS_LOCAL    = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  const RENDER_HOST = 'bharat-shakti-backend.onrender.com';
+  const BACKEND_WS  = IS_LOCAL ? 'ws://localhost:8000' : `wss://${RENDER_HOST}`;
+
   function connectWS() {
     setWsState('connecting');
-    socket = new WebSocket('ws://localhost:8000/ws/student/blind');
+    socket = new WebSocket(`${BACKEND_WS}/ws/student/blind`);
     socket.onopen  = ()   => { setWsState('online'); tts('Connected to classroom.'); };
     socket.onmessage = e  => { 
       const d=JSON.parse(e.data); 
