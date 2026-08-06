@@ -3,11 +3,12 @@ import urllib.request
 import urllib.parse
 from typing import List
 from pathlib import Path
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, UploadFile, File
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import os
+import google.generativeai as genai
 
 # Load .env from repo root
 try:
@@ -19,6 +20,10 @@ except ImportError:
 SUPABASE_URL      = os.environ.get("SUPABASE_URL", "")
 SUPABASE_ANON_KEY = os.environ.get("SUPABASE_ANON_KEY", "")
 SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY", "")  # backend-only, never exposed
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
+
+if GEMINI_API_KEY:
+    genai.configure(api_key=GEMINI_API_KEY)
 
 app = FastAPI(title="Bharat Shakti - Inclusive Classroom Backend")
 
@@ -107,6 +112,38 @@ def detect_lang(text: str):
         if words & hinglish:
             return JSONResponse({"lang": "hi", "confidence": 0.75, "source": "hinglish"})
         return JSONResponse({"lang": "en", "confidence": 0.5, "source": "fallback"})
+
+
+@app.post("/api/board-ocr")
+async def board_ocr(file: UploadFile = File(...)):
+    contents = await file.read()
+    
+    extracted_text = ""
+    if GEMINI_API_KEY:
+        try:
+            model = genai.GenerativeModel("gemini-2.0-flash")
+            image_parts = [
+                {
+                    "mime_type": file.content_type,
+                    "data": contents
+                }
+            ]
+            prompt = "Perform OCR on this whiteboard. Extract all text accurately, preserving layout where possible. Do not include notes or explanations, just return the text."
+            response = model.generate_content([prompt, image_parts[0]])
+            extracted_text = response.text.strip()
+        except Exception as e:
+            print(f"Gemini OCR Error: {e}")
+            extracted_text = "Error performing OCR via Gemini API."
+    else:
+        extracted_text = "Mock Board OCR: Please configure GEMINI_API_KEY in your env to extract live whiteboard text."
+
+    # Broadcast board note to all connected clients
+    await manager.broadcast({
+        "type": "board_note",
+        "text": extracted_text
+    })
+    
+    return {"status": "success", "extracted_text": extracted_text}
 
 
 @app.websocket("/ws/student/{mode}")

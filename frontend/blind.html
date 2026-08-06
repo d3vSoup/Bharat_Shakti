@@ -72,6 +72,7 @@
   .bg-surface, .bg-\[\#FFFBF2\] { background: rgba(255,255,255,0.72) !important; backdrop-filter: blur(6px); }
   .bg-surface-container-low { background: rgba(246,243,236,0.78) !important; backdrop-filter: blur(4px); }
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body class="text-on-background min-h-screen flex flex-col">
 
@@ -101,6 +102,10 @@
       <button id="audioModeBtn" onclick="cycleAudioMode()" class="flex items-center gap-1.5 border-2 border-on-surface px-3 py-1.5 rounded-sm bg-secondary-container text-sm font-bold text-on-secondary-container hover:brightness-95 transition-all paper-shadow-sm cursor-pointer" aria-label="Toggle Audio Feedback Mode (Alt+A)">
         <span class="material-symbols-outlined text-base" id="audioBtnIcon">spatial_audio</span>
         <span id="audioBtnText">Audio: Earcons + Voice</span>
+      </button>
+      <button id="practiceModeBtn" onclick="togglePracticeMode()" class="flex items-center gap-1.5 border-2 border-on-surface px-3 py-1.5 rounded-sm bg-tertiary-container text-sm font-bold text-on-tertiary-container hover:brightness-95 transition-all paper-shadow-sm cursor-pointer" aria-label="Toggle Practice Mode (Alt+T)">
+        <span class="material-symbols-outlined text-base">school</span>
+        <span id="practiceBtnText">Practice: Off</span>
       </button>
       <a href="deaf.html" class="bg-surface border-2 border-on-surface px-3 py-1.5 text-sm font-bold text-on-surface hover:bg-secondary-container transition-colors rounded-sm">Switch: Deaf Mode</a>
     </div>
@@ -235,6 +240,9 @@
             <button onclick="readAll()" class="bg-primary-container border-2 border-on-surface border-b-[3px] px-4 py-1.5 text-sm font-bold text-on-primary-fixed hover:brightness-95 transition-all active:border-b-0 active:translate-y-[2px] rounded-sm flex items-center gap-1.5">
               <span class="material-symbols-outlined text-base">volume_up</span>Read All
             </button>
+            <button onclick="exportExamPDF()" class="bg-secondary border-2 border-on-surface border-b-[3px] px-4 py-1.5 text-sm font-bold text-white hover:brightness-95 transition-all active:border-b-0 active:translate-y-[2px] rounded-sm flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-base">download</span>Export Exam
+            </button>
           </div>
         </div>
         <div id="outputBox"
@@ -342,6 +350,9 @@
   let isNumberMode = false;
   let outputText = '';
   let outputIsEmpty = true;
+  let braillePatternHistory = []; // to store visual Braille characters for export
+  let isPracticeMode = false;
+  let recognition = null;
 
   /* ── 3D Spatial Earcons Audio Engine ────────────────── */
   let audioCtx = null;
@@ -635,6 +646,17 @@
     }
   }
 
+  function getBrailleUnicode(sig) {
+    let offset = 0;
+    if (sig[0] === '1') offset += 1;   // Dot 1
+    if (sig[1] === '1') offset += 2;   // Dot 2
+    if (sig[2] === '1') offset += 4;   // Dot 3
+    if (sig[3] === '1') offset += 8;   // Dot 4
+    if (sig[4] === '1') offset += 16;  // Dot 5
+    if (sig[5] === '1') offset += 32;  // Dot 6
+    return String.fromCharCode(0x2800 + offset);
+  }
+
   /* ── Commit character ────────────────────────────── */
   function commit() {
     let sig = '';
@@ -643,16 +665,20 @@
     if (sig === '000000') { 
       outputText += ' '; 
       char = 'Space'; 
+      braillePatternHistory.push(' ');
     } else if (sig === '000001') { // dot 6 alone: Capital indicator
       isCapitalMode = !isCapitalMode;
       char = isCapitalMode ? 'Capital on' : 'Capital off';
+      braillePatternHistory.push(getBrailleUnicode(sig));
     } else if (sig === '001111') { // dots 3-4-5-6: Number indicator
       isNumberMode = !isNumberMode;
       char = isNumberMode ? 'Number mode on' : 'Number mode off';
+      braillePatternHistory.push(getBrailleUnicode(sig));
     } else {
       let activeMap = (currentLang === 'hi') ? BRAILLE_HI : BRAILLE_EN;
       let rawChar = activeMap[sig] || null;
       if (rawChar) {
+        braillePatternHistory.push(getBrailleUnicode(sig));
         if (isNumberMode) {
           let numKey = (currentLang === 'hi') ? BRAILLE_EN[sig] : rawChar;
           char = NUMBERS[numKey] || null;
@@ -694,6 +720,7 @@
     outputText = ''; outputIsEmpty = true;
     isCapitalMode = false;
     isNumberMode = false;
+    braillePatternHistory = [];
     const box = document.getElementById('outputBox');
     box.textContent = 'Start typing with the Perkins keys…';
     box.className = 'min-h-28 bg-surface-container border-2 border-dashed border-outline p-4 rounded-sm font-mono text-2xl tracking-widest text-on-surface leading-relaxed text-on-surface-variant italic text-sm';
@@ -716,6 +743,11 @@
       cycleAudioMode();
       return;
     }
+    if (e.altKey && e.key.toLowerCase() === 't') {
+      e.preventDefault();
+      togglePracticeMode();
+      return;
+    }
     const key = e.key.toLowerCase();
     if (KEY_MAP.hasOwnProperty(key)) { e.preventDefault(); toggleDot(KEY_MAP[key]); }
     else if (e.code === 'Space')   { e.preventDefault(); commit(); }
@@ -725,6 +757,7 @@
       if (outputText.length > 0) {
         const rem = outputText.slice(-1);
         outputText = outputText.slice(0,-1);
+        braillePatternHistory.pop();
         const box = document.getElementById('outputBox');
         if (outputText) { box.textContent = outputText; }
         else { clearOutput(); return; }
@@ -777,8 +810,122 @@
     setWsState('connecting');
     socket = new WebSocket('ws://localhost:8000/ws/student/blind');
     socket.onopen  = ()   => { setWsState('online'); tts('Connected to classroom.'); };
-    socket.onmessage = e  => { const d=JSON.parse(e.data); if(d.type==='broadcast'&&d.text) addFeedItem(d.text); };
+    socket.onmessage = e  => { 
+      const d=JSON.parse(e.data); 
+      if(d.type==='broadcast'&&d.text) addFeedItem(d.text); 
+      else if(d.type==='board_note'&&d.text) addFeedItem("[Board Note] " + d.text);
+    };
     socket.onclose = ()   => { setWsState('error'); setTimeout(connectWS,3000); };
+  }
+
+  /* ── Exam Exporter ───────────────────────────────── */
+  function exportExamPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    
+    doc.setFont("Helvetica", "bold");
+    doc.setFontSize(22);
+    doc.text("Bharat Shakti — Exam Paper", 20, 25);
+    
+    doc.setFontSize(12);
+    doc.setFont("Helvetica", "normal");
+    doc.text("Student ID: Blind Mode Session", 20, 35);
+    doc.text("Date: " + new Date().toLocaleDateString('en-IN'), 20, 42);
+    doc.line(20, 48, 190, 48);
+    
+    doc.setFont("Helvetica", "bold");
+    doc.text("Translated Output:", 20, 60);
+    doc.setFont("Helvetica", "normal");
+    doc.setFontSize(14);
+    const splitText = doc.splitTextToSize(outputText.trim() || "(No text entered)", 170);
+    doc.text(splitText, 20, 70);
+    
+    const brailleStr = braillePatternHistory.join("");
+    doc.setFont("Helvetica", "bold");
+    doc.setFontSize(12);
+    doc.text("Braille Patterns:", 20, 120);
+    doc.setFont("Helvetica", "normal");
+    doc.setFontSize(16);
+    const splitBraille = doc.splitTextToSize(brailleStr || "(No patterns entered)", 170);
+    doc.text(splitBraille, 20, 130);
+    
+    doc.save("bharat-shakti-exam.pdf");
+    tts("Exam PDF exported successfully", "en-IN");
+  }
+
+  /* ── Practice Mode (Voice-to-Braille Trainer) ────── */
+  function togglePracticeMode() {
+    isPracticeMode = !isPracticeMode;
+    const btnText = document.getElementById('practiceBtnText');
+    playModeSwitchEarcon();
+    if (isPracticeMode) {
+      btnText.textContent = "Practice: On";
+      tts("Practice mode activated. Speak a word to practice spelling it in Braille.", "en-IN");
+      startPracticeListening();
+    } else {
+      btnText.textContent = "Practice: Off";
+      tts("Practice mode deactivated.", "en-IN");
+      if (recognition) recognition.stop();
+    }
+  }
+
+  function startPracticeListening() {
+    if (!isPracticeMode) return;
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      tts("Speech recognition not supported in this browser.", "en-IN");
+      return;
+    }
+    recognition = new SpeechRecognition();
+    recognition.lang = currentLang === 'hi' ? 'hi-IN' : 'en-US';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    recognition.onresult = function(event) {
+      const word = event.results[0][0].transcript.trim().toLowerCase();
+      explainWordInBraille(word);
+    };
+
+    recognition.onerror = function() {
+      if (isPracticeMode) {
+        tts("Could not hear you. Please try again.", "en-IN");
+        setTimeout(startPracticeListening, 2000);
+      }
+    };
+
+    recognition.onend = function() {
+      if (isPracticeMode) {
+        // Auto-loop to listen again after explaining
+        setTimeout(startPracticeListening, 10000);
+      }
+    };
+
+    recognition.start();
+  }
+
+  function explainWordInBraille(word) {
+    let msg = `To spell the word ${word} in Braille. `;
+    let activeMap = (currentLang === 'hi') ? BRAILLE_HI : BRAILLE_EN;
+    
+    let reverseMap = {};
+    for (let dots in activeMap) {
+      reverseMap[activeMap[dots]] = dots;
+    }
+    
+    for (let i = 0; i < word.length; i++) {
+      let char = word[i];
+      let dots = reverseMap[char];
+      if (dots) {
+        let dotsList = [];
+        for (let d = 1; d <= 6; d++) {
+          if (dots[d-1] === '1') dotsList.push(d);
+        }
+        msg += `${char === ' ' ? 'Space' : char}: Dot ${dotsList.join(", ")}. `;
+      } else {
+        msg += `${char}: unknown. `;
+      }
+    }
+    tts(msg, currentLang === 'hi' ? 'hi-IN' : 'en-IN');
   }
 
   window.addEventListener('load', () => {
