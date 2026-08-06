@@ -98,6 +98,10 @@
         <span class="material-symbols-outlined text-base">translate</span>
         <span id="langBtnText">Mode: English</span>
       </button>
+      <button id="audioModeBtn" onclick="cycleAudioMode()" class="flex items-center gap-1.5 border-2 border-on-surface px-3 py-1.5 rounded-sm bg-secondary-container text-sm font-bold text-on-secondary-container hover:brightness-95 transition-all paper-shadow-sm cursor-pointer" aria-label="Toggle Audio Feedback Mode (Alt+A)">
+        <span class="material-symbols-outlined text-base" id="audioBtnIcon">spatial_audio</span>
+        <span id="audioBtnText">Audio: Earcons + Voice</span>
+      </button>
       <a href="deaf.html" class="bg-surface border-2 border-on-surface px-3 py-1.5 text-sm font-bold text-on-surface hover:bg-secondary-container transition-colors rounded-sm">Switch: Deaf Mode</a>
     </div>
   </div>
@@ -113,47 +117,45 @@
       <div class="bg-surface border-2 border-on-surface paper-shadow p-6">
         <div class="border-b-2 border-on-surface pb-4 mb-6 flex justify-between items-start">
           <div>
-            <h1 class="font-headline-md text-2xl font-bold text-on-surface flex items-center gap-2">
-              <span class="material-symbols-outlined text-on-tertiary-container text-2xl">braille</span>
-              Perkins Keyboard
-            </h1>
-            <p class="text-sm text-on-surface-variant mt-1">6-dot Braille cell emulator</p>
+            <h2 class="font-bold text-on-surface text-lg flex items-center gap-2">
+              <span class="material-symbols-outlined text-primary text-xl">keyboard</span>
+              Perkins Virtual Keyboard
+            </h2>
+            <p class="text-xs text-on-surface-variant mt-0.5" id="modeBadge">English Grade 1</p>
           </div>
-          <span id="modeBadge" class="bg-tertiary-container border border-on-surface px-2.5 py-0.5 rounded-full text-xs font-bold text-on-tertiary-container uppercase tracking-wider">English Grade 1</span>
+          <span class="text-xs bg-secondary-container border border-outline text-on-secondary-container px-2 py-0.5 font-bold rounded-sm">6-Dot System</span>
         </div>
 
-        <!-- Dot grid -->
-        <div class="flex justify-center mb-6">
-          <div class="grid gap-4" style="grid-template-columns: repeat(3,1fr) 20px repeat(3,1fr)">
-            <!-- Left hand: dots 3,2,1 -->
-            <button class="dot-btn w-16 h-16 rounded-full border-2 border-on-surface bg-surface-container flex flex-col items-center justify-center gap-0.5 paper-shadow-sm hover:bg-tertiary-container focus-ring" id="dot3" aria-label="Dot 3 key S" aria-pressed="false">
-              <span class="font-mono font-bold text-lg text-on-surface">S</span>
-              <span class="text-xs text-on-surface-variant">Dot 3</span>
+        <!-- Dot Buttons -->
+        <div class="grid grid-cols-2 gap-4 mb-6">
+          <div class="space-y-3">
+            <span class="text-xs font-bold text-on-surface-variant block uppercase tracking-wider">Left Hand (Dots 3, 2, 1)</span>
+            <button id="dot3" class="dot-btn w-full py-3 bg-surface-container border-2 border-on-surface font-bold text-on-surface text-center rounded-sm hover:bg-secondary-container flex items-center justify-between px-4" aria-pressed="false">
+              <span>Dot 3</span>
+              <kbd class="bg-surface border border-outline px-2 py-0.5 rounded text-xs font-mono text-on-surface-variant">S</kbd>
             </button>
-            <button class="dot-btn w-16 h-16 rounded-full border-2 border-on-surface bg-surface-container flex flex-col items-center justify-center gap-0.5 paper-shadow-sm hover:bg-tertiary-container focus-ring" id="dot2" aria-label="Dot 2 key D" aria-pressed="false">
-              <span class="font-mono font-bold text-lg text-on-surface">D</span>
-              <span class="text-xs text-on-surface-variant">Dot 2</span>
+            <button id="dot2" class="dot-btn w-full py-3 bg-surface-container border-2 border-on-surface font-bold text-on-surface text-center rounded-sm hover:bg-secondary-container flex items-center justify-between px-4" aria-pressed="false">
+              <span>Dot 2</span>
+              <kbd class="bg-surface border border-outline px-2 py-0.5 rounded text-xs font-mono text-on-surface-variant">D</kbd>
             </button>
-            <button class="dot-btn w-16 h-16 rounded-full border-2 border-on-surface bg-surface-container flex flex-col items-center justify-center gap-0.5 paper-shadow-sm hover:bg-tertiary-container focus-ring" id="dot1" aria-label="Dot 1 key F" aria-pressed="false">
-              <span class="font-mono font-bold text-lg text-on-surface">F</span>
-              <span class="text-xs text-on-surface-variant">Dot 1</span>
+            <button id="dot1" class="dot-btn w-full py-3 bg-surface-container border-2 border-on-surface font-bold text-on-surface text-center rounded-sm hover:bg-secondary-container flex items-center justify-between px-4" aria-pressed="false">
+              <span>Dot 1</span>
+              <kbd class="bg-surface border border-outline px-2 py-0.5 rounded text-xs font-mono text-on-surface-variant">F</kbd>
             </button>
-            <!-- Spacer -->
-            <div class="flex items-center justify-center">
-              <div class="w-px h-full bg-outline-variant"></div>
-            </div>
-            <!-- Right hand: dots 4,5,6 -->
-            <button class="dot-btn w-16 h-16 rounded-full border-2 border-on-surface bg-surface-container flex flex-col items-center justify-center gap-0.5 paper-shadow-sm hover:bg-secondary-container focus-ring" id="dot4" aria-label="Dot 4 key J" aria-pressed="false">
-              <span class="font-mono font-bold text-lg text-on-surface">J</span>
-              <span class="text-xs text-on-surface-variant">Dot 4</span>
+          </div>
+          <div class="space-y-3">
+            <span class="text-xs font-bold text-on-surface-variant block uppercase tracking-wider">Right Hand (Dots 4, 5, 6)</span>
+            <button id="dot4" class="dot-btn w-full py-3 bg-surface-container border-2 border-on-surface font-bold text-on-surface text-center rounded-sm hover:bg-secondary-container flex items-center justify-between px-4" aria-pressed="false">
+              <span>Dot 4</span>
+              <kbd class="bg-surface border border-outline px-2 py-0.5 rounded text-xs font-mono text-on-surface-variant">J</kbd>
             </button>
-            <button class="dot-btn w-16 h-16 rounded-full border-2 border-on-surface bg-surface-container flex flex-col items-center justify-center gap-0.5 paper-shadow-sm hover:bg-secondary-container focus-ring" id="dot5" aria-label="Dot 5 key K" aria-pressed="false">
-              <span class="font-mono font-bold text-lg text-on-surface">K</span>
-              <span class="text-xs text-on-surface-variant">Dot 5</span>
+            <button id="dot5" class="dot-btn w-full py-3 bg-surface-container border-2 border-on-surface font-bold text-on-surface text-center rounded-sm hover:bg-secondary-container flex items-center justify-between px-4" aria-pressed="false">
+              <span>Dot 5</span>
+              <kbd class="bg-surface border border-outline px-2 py-0.5 rounded text-xs font-mono text-on-surface-variant">K</kbd>
             </button>
-            <button class="dot-btn w-16 h-16 rounded-full border-2 border-on-surface bg-surface-container flex flex-col items-center justify-center gap-0.5 paper-shadow-sm hover:bg-secondary-container focus-ring" id="dot6" aria-label="Dot 6 key L" aria-pressed="false">
-              <span class="font-mono font-bold text-lg text-on-surface">L</span>
-              <span class="text-xs text-on-surface-variant">Dot 6</span>
+            <button id="dot6" class="dot-btn w-full py-3 bg-surface-container border-2 border-on-surface font-bold text-on-surface text-center rounded-sm hover:bg-secondary-container flex items-center justify-between px-4" aria-pressed="false">
+              <span>Dot 6</span>
+              <kbd class="bg-surface border border-outline px-2 py-0.5 rounded text-xs font-mono text-on-surface-variant">L</kbd>
             </button>
           </div>
         </div>
@@ -187,16 +189,16 @@
         </h3>
         <div class="space-y-2 text-sm">
           <div class="flex justify-between items-center border-b border-outline-variant pb-2">
-            <span class="text-on-surface-variant">S, D, F → Dots 3, 2, 1</span>
-            <span class="text-on-surface-variant">Left hand</span>
+            <span class="text-on-surface-variant">S, D, F → Dots 3, 2, 1 (Left ear)</span>
+            <span class="text-on-surface-variant font-bold text-xs bg-secondary-container px-1.5 py-0.5 rounded">Left Hand</span>
           </div>
           <div class="flex justify-between items-center border-b border-outline-variant pb-2">
-            <span class="text-on-surface-variant">J, K, L → Dots 4, 5, 6</span>
-            <span class="text-on-surface-variant">Right hand</span>
+            <span class="text-on-surface-variant">J, K, L → Dots 4, 5, 6 (Right ear)</span>
+            <span class="text-on-surface-variant font-bold text-xs bg-secondary-container px-1.5 py-0.5 rounded">Right Hand</span>
           </div>
           <div class="flex justify-between items-center border-b border-outline-variant pb-2">
             <kbd class="bg-surface-container border border-outline px-2 py-0.5 rounded text-on-surface font-mono text-xs">SPACE</kbd>
-            <span class="text-on-surface-variant">Commit character</span>
+            <span class="text-on-surface-variant">Commit chord (Chime)</span>
           </div>
           <div class="flex justify-between items-center border-b border-outline-variant pb-2">
             <kbd class="bg-surface-container border border-outline px-2 py-0.5 rounded text-on-surface font-mono text-xs">↵ ENTER</kbd>
@@ -204,11 +206,15 @@
           </div>
           <div class="flex justify-between items-center border-b border-outline-variant pb-2">
             <kbd class="bg-surface-container border border-outline px-2 py-0.5 rounded text-on-surface font-mono text-xs">⌫ BACKSPACE</kbd>
-            <span class="text-on-surface-variant">Delete last</span>
+            <span class="text-on-surface-variant">Delete last character</span>
           </div>
-          <div class="flex justify-between items-center">
+          <div class="flex justify-between items-center border-b border-outline-variant pb-2">
             <kbd class="bg-surface-container border border-outline px-2 py-0.5 rounded text-on-surface font-mono text-xs">Alt + L</kbd>
             <span class="text-on-surface-variant">Switch Language</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <kbd class="bg-surface-container border border-outline px-2 py-0.5 rounded text-on-surface font-mono text-xs">Alt + A</kbd>
+            <span class="text-on-surface-variant">Toggle Audio Mode</span>
           </div>
         </div>
       </div>
@@ -337,24 +343,258 @@
   let outputText = '';
   let outputIsEmpty = true;
 
+  /* ── 3D Spatial Earcons Audio Engine ────────────────── */
+  let audioCtx = null;
+  let audioFeedbackMode = 'both'; // 'both' | 'earcons' | 'tts'
+
+  function getAudioCtx() {
+    if (!audioCtx) {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (AudioContextClass) {
+        audioCtx = new AudioContextClass();
+      }
+    }
+    if (audioCtx && audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
+    return audioCtx;
+  }
+
+  // Audio Mode Cycle: 'both' -> 'earcons' -> 'tts' -> 'both'
+  function cycleAudioMode() {
+    if (audioFeedbackMode === 'both') audioFeedbackMode = 'earcons';
+    else if (audioFeedbackMode === 'earcons') audioFeedbackMode = 'tts';
+    else audioFeedbackMode = 'both';
+
+    const btnText = document.getElementById('audioBtnText');
+    const btnIcon = document.getElementById('audioBtnIcon');
+
+    if (audioFeedbackMode === 'both') {
+      if (btnText) btnText.textContent = 'Audio: Earcons + Voice';
+      if (btnIcon) btnIcon.textContent = 'spatial_audio';
+      playModeSwitchEarcon();
+      if (window.speechSynthesis) tts('Spatial earcons and voice enabled', 'en-IN');
+    } else if (audioFeedbackMode === 'earcons') {
+      if (btnText) btnText.textContent = 'Audio: Spatial Earcons Only';
+      if (btnIcon) btnIcon.textContent = 'headphones';
+      playModeSwitchEarcon();
+    } else {
+      if (btnText) btnText.textContent = 'Audio: Voice Only';
+      if (btnIcon) btnIcon.textContent = 'volume_up';
+      tts('Voice feedback mode active', 'en-IN');
+    }
+  }
+
+  // 1) Perkins Dot Spatial Earcon
+  // Dot 1: Left Ear (-0.85), Pitch 523.25 Hz (C5) - High
+  // Dot 2: Left Ear (-0.85), Pitch 440.00 Hz (A4) - Mid
+  // Dot 3: Left Ear (-0.85), Pitch 349.23 Hz (F4) - Low
+  // Dot 4: Right Ear (+0.85), Pitch 523.25 Hz (C5) - High
+  // Dot 5: Right Ear (+0.85), Pitch 440.00 Hz (A4) - Mid
+  // Dot 6: Right Ear (+0.85), Pitch 349.23 Hz (F4) - Low
+  function playDotEarcon(dotNum, isOn) {
+    if (audioFeedbackMode === 'tts') return;
+    const ctx = getAudioCtx();
+    if (!ctx) return;
+
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    
+    // Stereo panning (Left: dots 1-3, Right: dots 4-6)
+    const panVal = (dotNum <= 3) ? -0.85 : 0.85;
+    let panner = null;
+    if (ctx.createStereoPanner) {
+      panner = ctx.createStereoPanner();
+      panner.pan.setValueAtTime(panVal, ctx.currentTime);
+    }
+
+    // Base pitch mapping
+    const baseFreqs = {
+      1: 523.25, 4: 523.25, // High
+      2: 440.00, 5: 440.00, // Mid
+      3: 349.23, 6: 349.23  // Low
+    };
+    const freq = baseFreqs[dotNum] || 440;
+    const now = ctx.currentTime;
+
+    if (isOn) {
+      // Toggle ON: Bright Triangle wave with ascending pitch blip
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq * 0.88, now);
+      osc.frequency.exponentialRampToValueAtTime(freq * 1.12, now + 0.05);
+
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.linearRampToValueAtTime(0.35, now + 0.005);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+      osc.start(now);
+      osc.stop(now + 0.085);
+    } else {
+      // Toggle OFF: Soft Sine wave with descending pitch blip
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq * 1.12, now);
+      osc.frequency.exponentialRampToValueAtTime(freq * 0.88, now + 0.05);
+
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.linearRampToValueAtTime(0.2, now + 0.005);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
+      osc.start(now);
+      osc.stop(now + 0.075);
+    }
+
+    if (panner) {
+      osc.connect(gain);
+      gain.connect(panner);
+      panner.connect(ctx.destination);
+    } else {
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+    }
+  }
+
+  // 2) Character Commit Chord Earcon (Harmonized major triad)
+  function playCommitEarcon() {
+    if (audioFeedbackMode === 'tts') return;
+    const ctx = getAudioCtx();
+    if (!ctx) return;
+
+    const chord = [523.25, 659.25, 783.99]; // C5, E5, G5
+    const now = ctx.currentTime;
+
+    chord.forEach((freq, idx) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, now + idx * 0.02);
+
+      let panner = null;
+      if (ctx.createStereoPanner) {
+        panner = ctx.createStereoPanner();
+        // Spread chord across stereo field (-0.4, 0, +0.4)
+        panner.pan.setValueAtTime((idx - 1) * 0.4, now);
+      }
+
+      gain.gain.setValueAtTime(0.001, now + idx * 0.02);
+      gain.gain.linearRampToValueAtTime(0.2, now + idx * 0.02 + 0.005);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.02 + 0.15);
+
+      if (panner) {
+        osc.connect(gain);
+        gain.connect(panner);
+        panner.connect(ctx.destination);
+      } else {
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+      }
+
+      osc.start(now + idx * 0.02);
+      osc.stop(now + idx * 0.02 + 0.16);
+    });
+  }
+
+  // 3) Delete Earcon (Double downward thud)
+  function playDeleteEarcon() {
+    if (audioFeedbackMode === 'tts') return;
+    const ctx = getAudioCtx();
+    if (!ctx) return;
+
+    const now = ctx.currentTime;
+    [0, 0.04].forEach(offset => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(320, now + offset);
+      osc.frequency.exponentialRampToValueAtTime(160, now + offset + 0.035);
+
+      gain.gain.setValueAtTime(0.001, now + offset);
+      gain.gain.linearRampToValueAtTime(0.18, now + offset + 0.003);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + offset + 0.04);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now + offset);
+      osc.stop(now + offset + 0.045);
+    });
+  }
+
+  // 4) Clear Earcon (Multi-tone downward slide)
+  function playClearEarcon() {
+    if (audioFeedbackMode === 'tts') return;
+    const ctx = getAudioCtx();
+    if (!ctx) return;
+
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(700, now);
+    osc.frequency.exponentialRampToValueAtTime(150, now + 0.2);
+
+    gain.gain.setValueAtTime(0.001, now);
+    gain.gain.linearRampToValueAtTime(0.25, now + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.23);
+  }
+
+  // 5) Mode Switch Earcon (Stereo sweep)
+  function playModeSwitchEarcon() {
+    const ctx = getAudioCtx();
+    if (!ctx) return;
+
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(440, now);
+    osc.frequency.exponentialRampToValueAtTime(880, now + 0.1);
+
+    let panner = null;
+    if (ctx.createStereoPanner) {
+      panner = ctx.createStereoPanner();
+      panner.pan.setValueAtTime(-0.8, now);
+      panner.pan.linearRampToValueAtTime(0.8, now + 0.1);
+    }
+
+    gain.gain.setValueAtTime(0.001, now);
+    gain.gain.linearRampToValueAtTime(0.2, now + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+
+    if (panner) {
+      osc.connect(gain);
+      gain.connect(panner);
+      panner.connect(ctx.destination);
+    } else {
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+    }
+
+    osc.start(now);
+    osc.stop(now + 0.13);
+  }
+
   /* ── Language Switcher ────────────────────────────── */
   function toggleLanguage() {
     currentLang = (currentLang === 'en') ? 'hi' : 'en';
     const btnText = document.getElementById('langBtnText');
     const badge = document.getElementById('modeBadge');
+    playModeSwitchEarcon();
     if (currentLang === 'hi') {
       if (btnText) btnText.textContent = 'Mode: Bharati (Hindi)';
       if (badge) badge.textContent = 'Bharati Braille (Hindi)';
-      tts('Switched to Bharati Hindi Braille mode', 'en-IN');
+      if (audioFeedbackMode !== 'earcons') tts('Switched to Bharati Hindi Braille mode', 'en-IN');
     } else {
       if (btnText) btnText.textContent = 'Mode: English';
       if (badge) badge.textContent = 'English Grade 1';
-      tts('Switched to English Braille mode', 'en-IN');
+      if (audioFeedbackMode !== 'earcons') tts('Switched to English Braille mode', 'en-IN');
     }
   }
 
   /* ── TTS ─────────────────────────────────────────── */
   function tts(msg, langOverride) {
+    if (audioFeedbackMode === 'earcons' && !msg.startsWith('Teacher says')) return;
     window.speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(msg);
     u.lang = langOverride || (currentLang === 'hi' ? 'hi-IN' : 'en-IN');
@@ -389,7 +629,10 @@
   function toggleDot(n) {
     dotState[n] = !dotState[n];
     syncVisuals();
-    tts(`Dot ${n} ${dotState[n]?'on':'off'}`, 'en-IN');
+    playDotEarcon(n, dotState[n]);
+    if (audioFeedbackMode !== 'earcons') {
+      tts(`Dot ${n} ${dotState[n]?'on':'off'}`, 'en-IN');
+    }
   }
 
   /* ── Commit character ────────────────────────────── */
@@ -426,7 +669,7 @@
           isCapitalMode = false;
         }
       } else {
-        tts('Unknown pattern', 'en-IN');
+        if (audioFeedbackMode !== 'earcons') tts('Unknown pattern', 'en-IN');
       }
     }
 
@@ -443,7 +686,8 @@
       box.className = 'min-h-28 bg-surface-container border-2 border-dashed border-outline p-4 rounded-sm font-mono text-2xl tracking-widest text-on-surface leading-relaxed';
       outputIsEmpty = false;
     }
-    if (char) tts(char);
+    playCommitEarcon();
+    if (char && audioFeedbackMode !== 'earcons') tts(char);
   }
 
   function clearOutput() {
@@ -453,16 +697,23 @@
     const box = document.getElementById('outputBox');
     box.textContent = 'Start typing with the Perkins keys…';
     box.className = 'min-h-28 bg-surface-container border-2 border-dashed border-outline p-4 rounded-sm font-mono text-2xl tracking-widest text-on-surface leading-relaxed text-on-surface-variant italic text-sm';
-    tts('Cleared', 'en-IN');
+    playClearEarcon();
+    if (audioFeedbackMode !== 'earcons') tts('Cleared', 'en-IN');
   }
 
   function readAll() { tts(outputText.trim() || 'Output is empty'); }
 
   /* ── Keyboard ────────────────────────────────────── */
   window.addEventListener('keydown', e => {
+    getAudioCtx(); // Unlock audio context on user gesture
     if (e.altKey && e.key.toLowerCase() === 'l') {
       e.preventDefault();
       toggleLanguage();
+      return;
+    }
+    if (e.altKey && e.key.toLowerCase() === 'a') {
+      e.preventDefault();
+      cycleAudioMode();
       return;
     }
     const key = e.key.toLowerCase();
@@ -477,10 +728,14 @@
         const box = document.getElementById('outputBox');
         if (outputText) { box.textContent = outputText; }
         else { clearOutput(); return; }
-        tts(`Deleted ${rem.trim()?rem:'space'}`);
+        playDeleteEarcon();
+        if (audioFeedbackMode !== 'earcons') tts(`Deleted ${rem.trim()?rem:'space'}`);
       }
     }
   });
+
+  // Unlock audio context on click
+  window.addEventListener('click', () => getAudioCtx(), { once: false });
 
   // Dot button clicks
   for (let i=1;i<=6;i++) document.getElementById(`dot${i}`).addEventListener('click',()=>toggleDot(i));
