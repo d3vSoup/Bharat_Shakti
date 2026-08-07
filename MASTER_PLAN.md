@@ -39,12 +39,12 @@
 - [ ] **F1.3** Upgrade `/api/board-ocr` — Qwen3-VL via Together AI (Gemini stays as fallback)
 
 ### PHASE 2 — Quick Frontend Wins (2 hrs, zero backend needed)
-- [ ] **F2.1** Braille haptic vibration on commit (blind.html) — `navigator.vibrate()`
-- [ ] **F2.2** Fix WebSocket status pill to actually show live/dead state (deaf.html) — bug fix
-- [ ] **F2.3** ISL Coverage % badge — show "X/Y words have signs" before animation (deaf.html)
-- [ ] **F2.4** Board OCR visual banner in deaf.html — golden bar appears when board text arrives
-- [ ] **F2.5** Fix landing page false claims (index.html) — remove "WASM engine built" lie
-- [ ] **F2.6** Live animated stats counters (index.html) — 18M+, 150+, <50ms
+- [x] **F2.1** Braille haptic vibration on commit (blind.html) — `navigator.vibrate()`
+- [x] **F2.2** Fix WebSocket status pill to actually show live/dead state (deaf.html) — bug fix
+- [x] **F2.3** ISL Coverage % badge — show "X/Y words have signs" before animation (deaf.html)
+- [x] **F2.4** Board OCR visual banner in deaf.html — golden bar appears when board text arrives
+- [x] **F2.5** Fix landing page false claims (index.html) — remove "WASM engine built" lie
+- [x] **F2.6** Live animated stats counters (index.html) — 18M+, 150+, <50ms
 
 ### PHASE 3 — Deaf Mode AI UI (3 hrs, needs Phase 1 first)
 - [ ] **F3.1** AI Simplification bar — before/after panel showing raw vs. Groq-simplified text (deaf.html)
