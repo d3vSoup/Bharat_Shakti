@@ -363,15 +363,15 @@
   window.addEventListener('load', () => {
     setTimeout(() => {
       speak(
-        'Welcome to Bharat Shakti — Inclusive Classroom AI. ' +
-        'If you are a blind student, press the Spacebar now to enter Blind Mode with full audio and Braille support. ' +
+        'Welcome to Bharat Shakti — Inclusive Classroom Assistant. ' +
+        'If you are a blind student, press the space bar key now to enter Blind Mode with full audio and Braille support. ' +
         'If you are a deaf student, click anywhere or tap Deaf Mode.'
       );
     }, 600);
     // Gentle repeat after 8s in case they missed the first announcement
     setTimeout(() => {
       if (document.visibilityState === 'visible') {
-        speak('Press Spacebar for Blind Mode, or click for Deaf Mode.');
+        speak('Press the space bar key for Blind Mode, or click anywhere for Deaf Mode.');
       }
     }, 8000);
   });
