@@ -882,16 +882,9 @@
       return;
     }
 
-    // Anti-glitch: if a GIF is currently animating, don't interrupt it.
-    // Only cancel if we have a new *non-letter* gesture (word-level sign)
-    const newHasWord = gestures.some(g => g.type === 'gif' || g.type === 'still');
-    if (isAnimating && !newHasWord) {
-      // Queue: just update gloss ribbon but don't restart finger-spell mid-sign
-      glossRibbon.textContent = `ISL Gloss (SOV): ${gloss.join(' — ')}`;
-      return;
-    }
-
-    // Stop previous animation only when we have a new substantive gesture
+    // Always cancel previous animation and start fresh.
+    // The old anti-glitch guard (isAnimating && !newHasWord) was incorrectly
+    // blocking ALL English sentences because English always fingerspells (no gif/still).
     if (activeAnimation) { activeAnimation.cancel(); activeAnimation = null; }
     isAnimating = false;
 
