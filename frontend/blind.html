@@ -181,7 +181,7 @@
         </div>
 
         <!-- Spacebar commit button -->
-        <button onclick="commit()" class="w-full bg-primary-container border-2 border-on-surface border-b-[3px] py-3 font-bold text-on-primary-fixed hover:brightness-95 transition-all active:border-b-0 active:translate-y-[3px] rounded-sm paper-shadow-sm flex items-center justify-center gap-2">
+        <button id="commitBtn" onclick="commit()" class="w-full bg-primary-container border-2 border-on-surface border-b-[3px] py-3 font-bold text-on-primary-fixed hover:brightness-95 transition-all active:border-b-0 active:translate-y-[3px] rounded-sm paper-shadow-sm flex items-center justify-center gap-2">
           <span class="material-symbols-outlined text-xl">space_bar</span>
           Commit Character (SPACE)
         </button>
@@ -217,9 +217,17 @@
             <kbd class="bg-surface-container border border-outline px-2 py-0.5 rounded text-on-surface font-mono text-xs">Alt + L</kbd>
             <span class="text-on-surface-variant">Switch Language</span>
           </div>
-          <div class="flex justify-between items-center">
+          <div class="flex justify-between items-center border-b border-outline-variant pb-2">
             <kbd class="bg-surface-container border border-outline px-2 py-0.5 rounded text-on-surface font-mono text-xs">Alt + A</kbd>
             <span class="text-on-surface-variant">Toggle Audio Mode</span>
+          </div>
+          <div class="flex justify-between items-center border-b border-outline-variant pb-2">
+            <kbd class="bg-surface-container border border-outline px-2 py-0.5 rounded text-on-surface font-mono text-xs">Alt + E</kbd>
+            <span class="text-on-surface-variant">Export transcript PDF</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <kbd class="bg-error-container border border-error px-2 py-0.5 rounded text-on-error-container font-mono text-xs">Hold SPACE</kbd>
+            <span class="text-on-surface-variant font-semibold text-error">&#x1F399; Voice input → Braille</span>
           </div>
         </div>
       </div>
@@ -843,7 +851,17 @@
     }
     const key = e.key.toLowerCase();
     if (KEY_MAP.hasOwnProperty(key)) { e.preventDefault(); toggleDot(KEY_MAP[key]); }
-    else if (e.code === 'Space')   { e.preventDefault(); commit(); }
+    else if (e.code === 'Space') {
+      e.preventDefault();
+      // Hold-Space detection: only start the timer on the first keydown (not key-repeat)
+      if (!spaceDown) {
+        spaceDown = true;
+        spaceHoldTimer = setTimeout(() => {
+          spaceHoldTimer = null;
+          startVoiceInput();
+        }, 500); // 500ms hold = voice mode
+      }
+    }
     else if (e.key === 'Enter')    { e.preventDefault(); readAll(); }
     else if (e.key === 'Backspace') {
       e.preventDefault();
@@ -860,8 +878,83 @@
     }
   });
 
+  // Space keyup: short press = commit chord, long press = stop voice recording
+  window.addEventListener('keyup', e => {
+    if (e.code === 'Space') {
+      e.preventDefault();
+      spaceDown = false;
+      if (spaceHoldTimer !== null) {
+        // Released before 500ms threshold — it's a normal commit
+        clearTimeout(spaceHoldTimer);
+        spaceHoldTimer = null;
+        commit();
+      } else if (voiceInputActive) {
+        stopVoiceInput();
+      }
+    }
+  });
+
   // Unlock audio context on click
   window.addEventListener('click', () => getAudioCtx(), { once: false });
+
+  /* ── Voice Input (Hold-Space → Speech → Braille Transcript) ───────────────────── */
+  let spaceDown = false;
+  let spaceHoldTimer = null;
+  let voiceInputActive = false;
+
+  const VoiceSR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  let voiceRecognition = null;
+
+  if (VoiceSR) {
+    voiceRecognition = new VoiceSR();
+    voiceRecognition.continuous = false;
+    voiceRecognition.interimResults = false;
+
+    voiceRecognition.onresult = e => {
+      const transcript = e.results[0][0].transcript.trim();
+      if (transcript) {
+        // Append spoken text to the output (same buffer as Braille typed text)
+        if (outputText && !outputText.endsWith(' ')) outputText += ' ';
+        outputText += transcript + ' ';
+        braillePatternHistory.push(null); // placeholder so backspace works
+        cursorIndex = -1;
+        updateDisplay();
+        tts('You said: ' + transcript);
+      } else {
+        tts('Nothing heard. Try again.', 'en-IN');
+      }
+      voiceInputActive = false;
+      document.getElementById('commitBtn')?.classList.remove('bg-error','text-white');
+    };
+
+    voiceRecognition.onerror = e => {
+      voiceInputActive = false;
+      document.getElementById('commitBtn')?.classList.remove('bg-error','text-white');
+      tts(e.error === 'no-speech' ? 'Nothing heard. Try again.' : 'Voice error. Try again.', 'en-IN');
+    };
+
+    voiceRecognition.onend = () => {
+      voiceInputActive = false;
+      document.getElementById('commitBtn')?.classList.remove('bg-error','text-white');
+    };
+  }
+
+  function startVoiceInput() {
+    if (!voiceRecognition) { tts('Voice input not supported in this browser.', 'en-IN'); return; }
+    if (voiceInputActive) return;
+    voiceInputActive = true;
+    voiceRecognition.lang = currentLang === 'hi' ? 'hi-IN' : 'en-IN';
+    voiceRecognition.start();
+    tts('Recording. Speak now.', 'en-IN');
+    // Visual cue: turn commit button red while recording
+    document.getElementById('commitBtn')?.classList.add('bg-error','text-white');
+  }
+
+  function stopVoiceInput() {
+    if (!voiceRecognition || !voiceInputActive) return;
+    voiceRecognition.stop();
+  }
+
 
   // Dot button clicks
   for (let i=1;i<=6;i++) document.getElementById(`dot${i}`).addEventListener('click',()=>toggleDot(i));
@@ -1028,9 +1121,10 @@
   window.addEventListener('load', () => {
     const welcomeLines = [
       'Blind Mode is now active. Welcome to Bharat Shakti.',
-      'For Braille input: hold S, D, F for left hand dots 3, 2, 1. Hold J, K, L for right hand dots 4, 5, 6. Then press the Space bar to commit the character and hear it spoken aloud.',
-      'Keyboard shortcuts: Press Enter to read all your text aloud. Press Backspace to delete the last character. Press Alt L to switch between English and Hindi Braille. Press Alt A to change audio mode. Press Alt E to export your exam as a PDF.',
-      'You are all set. Say your first Braille letter now.'
+      'For Braille input: hold S, D, F for left hand dots 3, 2, 1. Hold J, K, L for right hand dots 4, 5, 6. Then tap the Space bar to commit the character.',
+      'NEW: You can also SPEAK instead of typing! Hold the Space bar for half a second, then speak your answer. Release Space when done. Your speech will be added to the transcript automatically.',
+      'Other shortcuts: Press Enter to read all text aloud. Press Backspace to delete. Press Alt L for language. Press Alt E to export your exam.',
+      'You are all set. Begin typing or hold Space to speak.'
     ];
     let idx = 0;
     welcomeActive = true;
