@@ -609,8 +609,18 @@
   }
 
   /* ── TTS ─────────────────────────────────────────── */
+  // ── TTS with welcome-mode protection ──────────────────────────
+  // While the welcome guide is speaking, any tts() call is queued
+  // instead of cancelling it. Queue flushes when welcome finishes.
+  let welcomeActive = false;
+  let ttsQueue = [];
+
   function tts(msg, langOverride) {
     if (audioFeedbackMode === 'earcons' && !msg.startsWith('Teacher says')) return;
+    if (welcomeActive) {
+      ttsQueue.push({ msg, langOverride });
+      return;
+    }
     window.speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(msg);
     u.lang = langOverride || (currentLang === 'hi' ? 'hi-IN' : 'en-IN');
@@ -1016,18 +1026,24 @@
   }
 
   window.addEventListener('load', () => {
-    // Play a full guided welcome using chained onend callbacks
-    // so each sentence plays AFTER the previous one finishes.
-    // This plays immediately without any key press needed.
     const welcomeLines = [
       'Blind Mode is now active. Welcome to Bharat Shakti.',
       'For Braille input: hold S, D, F for left hand dots 3, 2, 1. Hold J, K, L for right hand dots 4, 5, 6. Then press the Space bar to commit the character and hear it spoken aloud.',
       'Keyboard shortcuts: Press Enter to read all your text aloud. Press Backspace to delete the last character. Press Alt L to switch between English and Hindi Braille. Press Alt A to change audio mode. Press Alt E to export your exam as a PDF.',
-      'The keyboard reference is shown on screen below the Perkins keyboard. Say your first Braille letter now.'
+      'You are all set. Say your first Braille letter now.'
     ];
     let idx = 0;
+    welcomeActive = true;
+    ttsQueue = [];
+
     function speakNext() {
-      if (idx >= welcomeLines.length) return;
+      if (idx >= welcomeLines.length) {
+        // Welcome done — flush anything that tried to speak during it
+        welcomeActive = false;
+        const queued = ttsQueue.splice(0);
+        queued.forEach(q => tts(q.msg, q.langOverride));
+        return;
+      }
       const u = new SpeechSynthesisUtterance(welcomeLines[idx++]);
       u.lang = 'en-IN';
       u.onend = speakNext;
@@ -1038,6 +1054,7 @@
     syncVisuals();
     connectWS();
   });
+
 
 </script>
 <script src="gradient-bg.js"></script>
