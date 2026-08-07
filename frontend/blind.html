@@ -240,7 +240,7 @@
             <button onclick="readAll()" class="bg-primary-container border-2 border-on-surface border-b-[3px] px-4 py-1.5 text-sm font-bold text-on-primary-fixed hover:brightness-95 transition-all active:border-b-0 active:translate-y-[2px] rounded-sm flex items-center gap-1.5">
               <span class="material-symbols-outlined text-base">volume_up</span>Read All
             </button>
-            <button onclick="exportExamPDF()" class="bg-secondary border-2 border-on-surface border-b-[3px] px-4 py-1.5 text-sm font-bold text-white hover:brightness-95 transition-all active:border-b-0 active:translate-y-[2px] rounded-sm flex items-center gap-1.5">
+            <button id="exportBtn" onclick="exportExamPDF()" class="bg-secondary border-2 border-on-surface border-b-[3px] px-4 py-1.5 text-sm font-bold text-white hover:brightness-95 transition-all active:border-b-0 active:translate-y-[2px] rounded-sm flex items-center gap-1.5">
               <span class="material-symbols-outlined text-base">download</span>Export Exam
             </button>
           </div>
@@ -617,6 +617,16 @@
     window.speechSynthesis.speak(u);
   }
 
+  // ── Chrome TTS heartbeat ───────────────────────────────
+  // Chrome has a bug where speechSynthesis stops working after ~15s of inactivity.
+  // Calling pause()+resume() every 10s keeps the synthesis engine alive indefinitely.
+  setInterval(() => {
+    if (window.speechSynthesis && window.speechSynthesis.speaking) {
+      window.speechSynthesis.pause();
+      window.speechSynthesis.resume();
+    }
+  }, 10000);
+
   /* ── Sync visuals ────────────────────────────────── */
   function syncVisuals() {
     let sig = '';
@@ -762,6 +772,12 @@
     if (e.altKey && e.key.toLowerCase() === 't') {
       e.preventDefault();
       togglePracticeMode();
+      return;
+    }
+    if (e.altKey && e.key.toLowerCase() === 'e') {
+      e.preventDefault();
+      document.getElementById('exportBtn')?.click();
+      tts('Exporting exam', 'en-IN');
       return;
     }
     // Section Jumping: Ctrl + 1 / 2 / 3
@@ -1000,10 +1016,29 @@
   }
 
   window.addEventListener('load', () => {
-    tts('Blind Mode ready. Use S D F and J K L for Braille dots. Press Space to commit a character.');
+    // Play a full guided welcome using chained onend callbacks
+    // so each sentence plays AFTER the previous one finishes.
+    // This plays immediately without any key press needed.
+    const welcomeLines = [
+      'Blind Mode is now active. Welcome to Bharat Shakti.',
+      'For Braille input: hold S, D, F for left hand dots 3, 2, 1. Hold J, K, L for right hand dots 4, 5, 6. Then press the Space bar to commit the character and hear it spoken aloud.',
+      'Keyboard shortcuts: Press Enter to read all your text aloud. Press Backspace to delete the last character. Press Alt L to switch between English and Hindi Braille. Press Alt A to change audio mode. Press Alt E to export your exam as a PDF.',
+      'The keyboard reference is shown on screen below the Perkins keyboard. Say your first Braille letter now.'
+    ];
+    let idx = 0;
+    function speakNext() {
+      if (idx >= welcomeLines.length) return;
+      const u = new SpeechSynthesisUtterance(welcomeLines[idx++]);
+      u.lang = 'en-IN';
+      u.onend = speakNext;
+      window.speechSynthesis.speak(u);
+    }
+    window.speechSynthesis.cancel();
+    speakNext();
     syncVisuals();
     connectWS();
   });
+
 </script>
 <script src="gradient-bg.js"></script>
 </body>
