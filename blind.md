@@ -32,6 +32,28 @@ Before listing features, let's think about what a blind student's school day act
 - Every committed character is spoken aloud instantly.
 - Teacher broadcasts arrive via WebSocket and display in a Live Classroom Feed panel, spoken aloud automatically.
 
+### Sticky Modifiers (Capitals & Numbers)
+- **Capital sign (`⠠` / dot 6)**: Capitalizes the next letter.
+- **Number sign (`⠼` / dots 3-4-5-6)**: Translates the next letters `a`-`j` to numbers `1`-`0`.
+
+### Bharati (Hindi) Braille Translator
+- Mappings from 6-dot arrays to Hindi Devanagari characters (e.g. dots 1-3 to क) toggled via `Alt+L` or UI.
+
+### 3D Spatial Audio Earcons
+- Tones synthesized dynamically via Web Audio API panned to Left/Right ears based on dot layout.
+
+### Live Board OCR Sync
+- Automatic TTS announcement when a `/api/board-ocr` text broadcast payload is received.
+
+### Client-Side Exam Exporter
+- Generates a PDF containing the written text and visual Unicode Braille cells (`U+2800`–`U+28FF`).
+
+### Voice-to-Braille Reverse Trainer
+- Active learning loop listening to words via Speech Recognition and explaining dot keys verbally.
+
+### Expanded Keyboard Navigation
+- Section jumping (`Ctrl + 1 / 2 / 3`) and character-by-character back-navigation using Arrow keys.
+
 ---
 
 ## ⚙️ The Core Architecture & Engine (Technical Deep Dive)
@@ -129,7 +151,7 @@ Implement Nemeth Braille so students can type algebraic equations and calculus d
 |---|---|---|---|---|
 | Built for Indian classrooms | ✅ | ❌ | ❌ | ❌ |
 | Virtual Perkins keyboard | ✅ Native | ❌ | ❌ | ❌ |
-| Bharati (Hindi) Braille | 🔜 Planned | ❌ | ❌ | Partial |
+| Bharati (Hindi) Braille | ✅ | ❌ | ❌ | Partial |
 | Zero hardware needed | ✅ | ✅ | ✅ | ❌ (needs display) |
 | Live classroom WebSocket | ✅ | ❌ | ❌ | ❌ |
 | Audio-first design | ✅ Earcons | Overlay | Overlay | Partial |
