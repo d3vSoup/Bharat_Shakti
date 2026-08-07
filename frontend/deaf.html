@@ -558,7 +558,7 @@
     // 'hi'   → 'hi-IN' for Devanagari mic input
     // 'en'   → 'en-IN'
     if (recognition) {
-      const targetLang = lang === 'hi' ? 'hi-IN' : lang === 'en' ? 'en-IN' : 'hi-IN';
+      const targetLang = lang === 'hi' ? 'hi-IN' : 'en-IN'; // auto + en both use en-IN
       if (recognition.lang !== targetLang) {
         recognition.lang = targetLang;
         if (isRecording) {
@@ -638,9 +638,32 @@
 
   // Map UI language selection to the best locale for Chrome's speech engine
   function srLang() {
-    if (currentLang === 'hi') return 'hi-IN';   // pure Hindi
-    if (currentLang === 'en') return 'en-IN';   // pure English (Indian accent)
-    return 'hi-IN';  // Auto: hi-IN captures both Hindi and Hinglish, English words still recognised
+    if (currentLang === 'hi') return 'hi-IN';  // pure Hindi — Devanagari output
+    // For 'en' AND 'auto': use en-IN
+    // en-IN handles Indian-accented English perfectly AND phonetically captures
+    // Hindi words in Roman script (e.g. "aaj padhai hogi") which we then
+    // detect via vocabulary matching below
+    return 'en-IN';
+  }
+
+  // Fast local Hindi detection — no network call.
+  // en-IN recognizer outputs Roman-script Hindi (e.g. "aaj", "padhai", "nahi").
+  // We detect these by checking against a vocabulary set.
+  const HINDI_VOCAB = new Set([
+    'namaste','namaskar','aaj','kal','haan','nahi','kitab','shikshak','padhna',
+    'likhna','dhanyawad','shukriya','madad','achha','achcha','kaise','kyun','kya',
+    'yeh','woh','main','tum','aap','mera','tera','unka','hamara','bahut','thoda',
+    'bada','chota','bura','ghar','padhai','siksha','vidyarthi','sawaal','jawab',
+    'samajh','dekho','suno','likho','padhlo','theek','bilkul','zaroor','bas',
+  ]);
+
+  function detectLangLocal(text) {
+    // Devanagari chars = definitely Hindi (hi-IN mode, paste, or typed)
+    if (/[\u0900-\u097F]/.test(text)) return 'hi';
+    // Phonetic Hindi words in Roman script (en-IN auto mode)
+    const words = text.toLowerCase().split(/\s+/);
+    const hindiHits = words.filter(w => HINDI_VOCAB.has(w)).length;
+    return hindiHits >= 1 ? 'hi' : 'en';
   }
 
   if (SR) {
@@ -669,13 +692,13 @@
 
         clearTimeout(renderDebounce);
         renderDebounce = setTimeout(() => {
-          // Fast local detection: Devanagari = Hindi, otherwise use the UI toggle
-          const detectedLang = /[\u0900-\u097F]/.test(final)
-            ? 'hi'
-            : (currentLang !== 'auto' ? currentLang : 'en');
+          // Fast local detection: Devanagari = Hindi, Hindi vocab = Hindi, else English
+          const detectedLang = currentLang === 'hi' ? 'hi'
+            : currentLang === 'en' ? 'en'
+            : detectLangLocal(final); // auto mode: smart local detection
           langBadge.textContent = detectedLang === 'hi' ? 'हिं' : 'EN';
           broadcastText(final.trim(), detectedLang);
-        }, 200); // 200ms is enough to coalesce rapid speech chunks
+        }, 200); // 200ms coalesces rapid speech chunks
       }
     };
     recognition.onerror = e => { if (e.error !== 'no-speech') stopRecording(); };
