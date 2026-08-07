@@ -439,9 +439,10 @@
               <span class="material-symbols-outlined text-secondary text-2xl">sign_language</span>
               ISL Visualiser
             </h2>
-            <div class="flex items-center gap-2 mt-1">
+            <div class="flex items-center gap-2 mt-1 flex-wrap">
               <span class="sov-badge"><span class="material-symbols-outlined text-xs">swap_horiz</span> SVO → SOV</span>
               <span id="langBadge" class="text-xs font-bold px-2 py-0.5 rounded-full border-2 border-outline-variant bg-surface-container text-on-surface-variant">EN</span>
+              <span id="coverageBadge" class="hidden text-xs font-bold px-2 py-0.5 rounded-full border-2 border-outline-variant bg-surface-container text-on-surface-variant"></span>
             </div>
           </div>
           <div class="flex items-center gap-1.5 bg-secondary-container border-2 border-on-surface px-3 py-1 rounded-full paper-shadow-sm">
@@ -816,6 +817,29 @@
     liveLabel.textContent = 'Live';
   }
 
+  /* ── F2.3: Coverage badge ─────────────────────────── */
+  function updateCoverageBadge(gestures) {
+    const badge = document.getElementById('coverageBadge');
+    if (!badge) return;
+    // Count unique words (not letters) for coverage
+    const uniqueWords = [...new Set(gestures.map(g => g.word).filter(Boolean))];
+    if (!uniqueWords.length) { badge.classList.add('hidden'); return; }
+    const covered = uniqueWords.filter(w => {
+      // A word is "covered" if ANY of its gestures is a gif or still (real sign)
+      return gestures.some(g => g.word === w && (g.type === 'gif' || g.type === 'still'));
+    }).length;
+    const total = uniqueWords.length;
+    const pct = Math.round((covered / total) * 100);
+    badge.textContent = `${pct}% ISL (${covered}/${total} signs)`;
+    badge.className = [
+      'text-xs font-bold px-2 py-0.5 rounded-full border-2',
+      pct >= 75 ? 'border-primary bg-primary-fixed text-on-primary-fixed' :
+      pct >= 50 ? 'border-secondary bg-secondary-container text-on-secondary-container' :
+                  'border-outline bg-surface-container-high text-on-surface-variant'
+    ].join(' ');
+    badge.classList.remove('hidden');
+  }
+
   function renderISL(text, lang = 'en') {
     // Run NLP pipeline
     const { gloss, gestures } = processToISL(text, lang);
@@ -848,6 +872,7 @@
     const hasGif = gestures.some(g => g.type === 'gif');
     gestureImg.style.objectFit = hasGif ? 'contain' : 'cover';
 
+    updateCoverageBadge(gestures); // F2.3
     isAnimating = true;
     activeAnimation = animateGestures(
       gestures,
@@ -887,9 +912,9 @@
 
   function setWsState(state) {
     const map = {
-      online:     ['bg-primary',  'Connected'],
-      error:      ['bg-error',    'Disconnected'],
-      connecting: ['bg-outline',  'Connecting…']
+      online:     ['bg-primary animate-pulse',  'Live ●'],
+      error:      ['bg-error',                  'Offline'],
+      connecting: ['bg-outline animate-pulse',  'Connecting…']
     };
     const [dotCls, label] = map[state] || map.connecting;
     wsDot.className = `w-2 h-2 rounded-full inline-block ${dotCls}`;
@@ -906,10 +931,53 @@
         addTranscriptEntry(d.text, d.lang || 'en');
         renderISL(d.text, d.lang || 'en');
       }
+      // F2.4 — Board OCR visual banner
+      if (d.type === 'board_note' && d.text) {
+        showBoardBanner(d.text);
+        // Also route board text through ISL engine so deaf students see it as signs
+        const lang = /[\u0900-\u097F]/.test(d.text) ? 'hi' : 'en';
+        addTranscriptEntry('[Board] ' + d.text, lang);
+        renderISL(d.text, lang);
+      }
     };
     socket.onclose = () => { setWsState('error'); setTimeout(connectWS, 3000); };
   }
 
+
+  /* ── F2.4: Board OCR Banner ──────────────────────── */
+  function showBoardBanner(text) {
+    let banner = document.getElementById('boardBanner');
+    if (!banner) {
+      banner = document.createElement('div');
+      banner.id = 'boardBanner';
+      banner.style.cssText = [
+        'position:fixed;top:72px;left:50%;transform:translateX(-50%) translateY(-8px)',
+        'z-index:60;max-width:480px;width:calc(100% - 32px)',
+        'background:#ffdea8;border:2px solid #7c5800;border-radius:4px',
+        'padding:12px 16px;display:flex;align-items:flex-start;gap:10px',
+        'box-shadow:4px 4px 0 #1c1c18;opacity:0;transition:opacity 0.3s ease,transform 0.3s ease'
+      ].join(';');
+      document.body.appendChild(banner);
+    }
+    banner.innerHTML = `
+      <span class="material-symbols-outlined" style="color:#7c5800;font-size:20px;flex-shrink:0;margin-top:1px">dashboard</span>
+      <div style="flex:1;min-width:0">
+        <p style="font-size:10px;font-weight:800;color:#7c5800;letter-spacing:.08em;text-transform:uppercase;margin:0 0 3px">📋 Board Content</p>
+        <p style="font-size:13px;color:#1c1c18;line-height:1.4;margin:0;word-break:break-word">${text}</p>
+      </div>
+    `;
+    // Animate in
+    requestAnimationFrame(() => {
+      banner.style.opacity = '1';
+      banner.style.transform = 'translateX(-50%) translateY(0)';
+    });
+    // Auto-dismiss after 6 seconds
+    clearTimeout(banner._t);
+    banner._t = setTimeout(() => {
+      banner.style.opacity = '0';
+      banner.style.transform = 'translateX(-50%) translateY(-8px)';
+    }, 6000);
+  }
 
   window.addEventListener('load', () => {
     connectWS();

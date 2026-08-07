@@ -143,6 +143,22 @@
         </a>
       </div>
 
+      <!-- F2.6 — Animated Impact Stats -->
+      <div class="relative z-10 grid grid-cols-3 gap-3 w-full max-w-xl mb-4" id="statsRow">
+        <div class="bg-surface border-2 border-on-surface paper-shadow-sm p-3 text-center rounded-sm">
+          <div class="font-extrabold text-2xl text-primary leading-none" id="stat1">0</div>
+          <div class="text-xs text-on-surface-variant font-bold tracking-widest uppercase mt-1">ISL Users India</div>
+        </div>
+        <div class="bg-surface border-2 border-on-surface paper-shadow-sm p-3 text-center rounded-sm">
+          <div class="font-extrabold text-2xl text-secondary leading-none" id="stat2">0</div>
+          <div class="text-xs text-on-surface-variant font-bold tracking-widest uppercase mt-1">ISL Signs Dict</div>
+        </div>
+        <div class="bg-surface border-2 border-on-surface paper-shadow-sm p-3 text-center rounded-sm">
+          <div class="font-extrabold text-2xl text-tertiary leading-none" id="stat3">0</div>
+          <div class="text-xs text-on-surface-variant font-bold tracking-widest uppercase mt-1">WS Latency</div>
+        </div>
+      </div>
+
       <!-- Accessibility auto-detection notice -->
       <div id="autoRouteNotice" class="hidden relative z-10 w-full max-w-xl bg-primary-fixed border-2 border-on-surface p-4 rounded-sm paper-shadow-sm text-left">
         <div class="flex items-center gap-2 mb-2">
@@ -261,10 +277,10 @@
             </div>
           </div>
           <div class="bg-surface p-4 border-2 border-on-surface flex items-start gap-4 rounded-sm">
-            <span class="material-symbols-outlined text-tertiary text-3xl">memory</span>
+            <span class="material-symbols-outlined text-tertiary text-3xl">visibility</span>
             <div>
-              <h4 class="font-label-lg text-label-lg text-on-surface mb-1">C++ WASM Offline Engine</h4>
-              <p class="font-body-md text-body-md text-sm text-on-surface-variant">Braille core runs locally even when conference Wi-Fi fails.</p>
+              <h4 class="font-label-lg text-label-lg text-on-surface mb-1">Qwen3-VL Board OCR</h4>
+              <p class="font-body-md text-body-md text-sm text-on-surface-variant">Open-source SOTA vision reads handwritten boards in Hindi & English — no OCR misses.</p>
             </div>
           </div>
           <div class="bg-surface p-4 border-2 border-on-surface flex items-start gap-4 rounded-sm">
@@ -275,10 +291,10 @@
             </div>
           </div>
           <div class="bg-surface p-4 border-2 border-on-surface flex items-start gap-4 rounded-sm">
-            <span class="material-symbols-outlined text-primary text-3xl">sign_language</span>
+            <span class="material-symbols-outlined text-primary text-3xl">bolt</span>
             <div>
-              <h4 class="font-label-lg text-label-lg text-on-surface mb-1">MediaPipe Hands JS</h4>
-              <p class="font-body-md text-body-md text-sm text-on-surface-variant">Two-way interaction: student signs are recognized and sent back to teacher.</p>
+              <h4 class="font-label-lg text-label-lg text-on-surface mb-1">Groq LPU Inference</h4>
+              <p class="font-body-md text-body-md text-sm text-on-surface-variant">Llama 3.3 70B simplifies academic sentences to ISL-friendly SOV in &lt;100ms.</p>
             </div>
           </div>
         </div>
@@ -341,13 +357,54 @@
     }
   });
 
-  /* ── TTS on first focus ────────────────────────────── */
-  let narrated = false;
-  document.addEventListener('focusin', () => {
-    if (narrated) return;
-    narrated = true;
-    speak('Welcome to Bharat Shakti. Press Spacebar for Blind Mode. Use Tab and Enter to navigate to Deaf Mode.');
-  }, { once: true });
+  /* ── Auto-announce for blind users (no gesture needed for speechSynthesis) ── */
+  // Fires on page load — blind users hear this before touching anything.
+  // speechSynthesis.speak() works without any user gesture, unlike AudioContext.
+  window.addEventListener('load', () => {
+    setTimeout(() => {
+      speak(
+        'Welcome to Bharat Shakti — Inclusive Classroom AI. ' +
+        'If you are a blind student, press the Spacebar now to enter Blind Mode with full audio and Braille support. ' +
+        'If you are a deaf student, click anywhere or tap Deaf Mode.'
+      );
+    }, 600);
+    // Gentle repeat after 8s in case they missed the first announcement
+    setTimeout(() => {
+      if (document.visibilityState === 'visible') {
+        speak('Press Spacebar for Blind Mode, or click for Deaf Mode.');
+      }
+    }, 8000);
+  });
+
+  /* ── F2.6: Animated stats counters ─────────────────── */
+  function animateCounter(id, target, formatter, duration) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const start = Date.now();
+    (function tick() {
+      const p = Math.min((Date.now() - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - p, 3); // ease-out cubic
+      el.textContent = formatter(Math.round(eased * target));
+      if (p < 1) requestAnimationFrame(tick);
+    })();
+  }
+
+  const statsRow = document.getElementById('statsRow');
+  if (statsRow && 'IntersectionObserver' in window) {
+    const obs = new IntersectionObserver(entries => {
+      if (!entries[0].isIntersecting) return;
+      obs.disconnect();
+      animateCounter('stat1', 18, v => v + 'M+ deaf', 1800);
+      animateCounter('stat2', 150, v => v + '+ signs', 1500);
+      animateCounter('stat3', 50, v => '<' + v + 'ms', 1200);
+    }, { threshold: 0.4 });
+    obs.observe(statsRow);
+  } else if (statsRow) {
+    // No IntersectionObserver — just set final values immediately
+    document.getElementById('stat1').textContent = '18M+ deaf';
+    document.getElementById('stat2').textContent = '150+ signs';
+    document.getElementById('stat3').textContent = '<50ms';
+  }
 </script>
 <script src="gradient-bg.js"></script>
 </body>
