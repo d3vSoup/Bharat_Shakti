@@ -20,7 +20,11 @@
 | Blind mode: Voice-to-Braille Trainer (Alt+T) | `frontend/blind.html` | ✅ Done |
 | Blind mode: Section navigation Ctrl+1/2/3 + Arrow keys | `frontend/blind.html` | ✅ Done |
 | Blind mode: Exam PDF export (jsPDF) | `frontend/blind.html` | ✅ Done |
-| Blind mode: Board OCR → TTS via WebSocket | `frontend/blind.html` | ✅ Done |
+| Blind mode: Voice Dictation (Hold Spacebar to transcribe audio) | `frontend/blind.html` | ✅ Done |
+| Blind mode: Guided Audio Welcome + Protected Queue + Chrome TTS Heartbeat | `frontend/blind.html` | ✅ Done |
+| Blind mode: `Alt+E` Keyboard Shortcut for PDF Export | `frontend/blind.html` | ✅ Done |
+| Deaf mode: Clean Printable Dialogue PDF Export | `frontend/deaf.html` | ✅ Done |
+| Landing page: TTS Pronunciation Fixes & Auto-route Audio Announcements | `frontend/index.html` | ✅ Done |
 | Backend: FastAPI + WebSocket broadcast + language detection | `backend/main.py` | ✅ Done |
 | Backend: Gemini Vision board OCR | `backend/main.py` | ✅ Done |
 

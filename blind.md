@@ -51,8 +51,17 @@ Before listing features, let's think about what a blind student's school day act
 ### Voice-to-Braille Reverse Trainer
 - Active learning loop listening to words via Speech Recognition and explaining dot keys verbally.
 
-### Expanded Keyboard Navigation
+### Expanded Keyboard Navigation & Shortcuts
 - Section jumping (`Ctrl + 1 / 2 / 3`) and character-by-character back-navigation using Arrow keys.
+- **Alt+E**: Instant keyboard shortcut for Exam PDF Export.
+
+### Voice Dictation (Hold Spacebar)
+- Holding the Spacebar for 500ms activates Speech Recognition. Releasing it stops recording, transcribes speech into text, automatically maps characters to Unicode Braille cells, and appends them to the transcript.
+
+### Guided Audio Onboarding & TTS Reliability Engine
+- Automated 4-sentence audio walkthrough on page load explaining controls, Perkins inputs, and shortcuts.
+- Protected TTS queue prevents WebSocket connection announcements from interrupting the welcome guide.
+- Chrome synthesis 10s heartbeat keepalive prevents SpeechSynthesis from stalling during longer sessions.
 
 ---
 
