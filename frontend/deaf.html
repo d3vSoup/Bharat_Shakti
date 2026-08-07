@@ -635,12 +635,19 @@
   /* ── Speech Recognition ──────────────────────────── */
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   let recognition = null;
+
+  // Map UI language selection to the best locale for Chrome's speech engine
+  function srLang() {
+    if (currentLang === 'hi') return 'hi-IN';   // pure Hindi
+    if (currentLang === 'en') return 'en-IN';   // pure English (Indian accent)
+    return 'hi-IN';  // Auto: hi-IN captures both Hindi and Hinglish, English words still recognised
+  }
+
   if (SR) {
     recognition = new SR();
-    recognition.continuous = true;
+    recognition.continuous     = true;
     recognition.interimResults = true;
-    // Auto mode: 'hi-IN' allows Chrome to capture both Hindi and English speech
-    recognition.lang = 'hi-IN';
+    recognition.lang           = srLang(); // set once; updated on lang toggle
 
     recognition.onresult = e => {
       let interim = '', final = '';
@@ -649,27 +656,30 @@
         if (e.results[i].isFinal) final += t; else interim += t;
       }
 
-      // Interim: update live bar only — NO gesture animation (prevents glitch)
+      // Interim: show live text in the bar (no animation — prevents glitch mid-sign)
       if (interim) {
         interimBar.textContent = interim;
         interimBar.className = 'min-h-10 bg-primary-fixed border-2 border-primary p-3 rounded-sm text-sm text-on-primary-fixed italic mb-1';
       }
 
-      // Final result: debounce 400ms, detect language via Google, then render
+      // Final result: fast-path language detection (no network call in the hot path)
       if (final.trim()) {
         interimBar.textContent = 'Speak to see live transcription…';
         interimBar.className = 'min-h-10 bg-surface-container border-2 border-dashed border-outline p-3 rounded-sm text-sm text-on-surface-variant italic mb-1';
 
         clearTimeout(renderDebounce);
-        renderDebounce = setTimeout(async () => {
-          // Use Google Translate detection (async) for best accuracy
-          const detectedLang = currentLang !== 'auto' ? currentLang : await detectLang(final.trim());
-          langBadge.textContent = detectedLang === 'hi' ? 'हिं' : 'AUTO';
+        renderDebounce = setTimeout(() => {
+          // Fast local detection: Devanagari = Hindi, otherwise use the UI toggle
+          const detectedLang = /[\u0900-\u097F]/.test(final)
+            ? 'hi'
+            : (currentLang !== 'auto' ? currentLang : 'en');
+          langBadge.textContent = detectedLang === 'hi' ? 'हिं' : 'EN';
           broadcastText(final.trim(), detectedLang);
-        }, 400);
+        }, 200); // 200ms is enough to coalesce rapid speech chunks
       }
     };
     recognition.onerror = e => { if (e.error !== 'no-speech') stopRecording(); };
+    // Auto-restart: keeps recording live after each browser speech segment ends
     recognition.onend   = () => { if (isRecording) recognition.start(); };
   } else {
     micBtn.disabled = true;
