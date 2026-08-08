@@ -40,6 +40,8 @@
 | Deaf mode: Teacher Sign Preview panel | `frontend/deaf.html` | ✅ Done |
 | Deaf mode: Summarise Lesson modal (Groq 5-bullet AI summary) | `frontend/deaf.html` | ✅ Done |
 | Blind mode: Summarise Lesson TTS read-aloud (Alt+S) | `frontend/blind.html` | ✅ Done |
+| Landing Page: Try It Live NLP Demo | `frontend/index.html` | ✅ Done |
+| Landing Page: Accurate Feature Badges | `frontend/index.html` | ✅ Done |
 | Landing page: Live animated stats counter + accurate feature badges | `frontend/index.html` | ✅ Done |
 
 ---
@@ -76,8 +78,8 @@
 - [x] **F4.2** Same button + TTS read-aloud in blind.html (Alt+S shortcut)
 
 ### PHASE 5 — Landing Page Polish (1 hr)
-- [ ] **F5.1** "Try It Live" demo widget on index.html — type → see ISL gloss instantly
-- [ ] **F5.2** Accurate feature badges (fix "planned" vs "built")
+- [x] **F5.1** "Try It Live" demo widget on index.html — type → see ISL gloss instantly
+- [x] **F5.2** Accurate feature badges (fix "planned" vs "built")
 
 ---
 

@@ -247,11 +247,40 @@
         <div class="flex flex-wrap gap-2 mb-6">
           <span class="bg-surface-container-high border-2 border-outline px-3 py-1 rounded-full font-label-lg text-label-lg text-on-surface-variant text-sm">Real-time Text-to-ISL</span>
           <span class="bg-surface-container-high border-2 border-outline px-3 py-1 rounded-full font-label-lg text-label-lg text-on-surface-variant text-sm">ISL Gloss NLP</span>
-          <span class="bg-surface-container-high border-2 border-outline px-3 py-1 rounded-full font-label-lg text-label-lg text-on-surface-variant text-sm">MediaPipe Tracking</span>
+          <span class="bg-surface-container-high border-2 border-outline px-3 py-1 rounded-full font-label-lg text-label-lg text-on-surface-variant text-sm" title="Built">AI Simplification</span>
         </div>
         <a href="deaf.html" class="w-full bg-surface border-2 border-on-surface font-label-lg text-label-lg py-3 mt-auto group-hover:bg-secondary group-hover:text-on-secondary transition-colors rounded-sm text-center inline-block">
           Enter Deaf Mode →
         </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Interactive NLP Demo (Phase 5) -->
+  <section class="w-full max-w-7xl mx-auto px-margin-mobile md:px-margin-desktop py-lg mb-lg">
+    <div class="bg-surface border-2 border-on-surface paper-shadow p-8 rounded-sm">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="font-headline-md text-headline-md text-on-surface flex items-center gap-2">
+          <span class="material-symbols-outlined text-primary text-3xl">psychology</span>
+          Try It Live: English to ISL SOV
+        </h2>
+        <span class="bg-primary-container text-on-primary-fixed text-xs font-bold px-2 py-1 rounded-sm uppercase tracking-wider">Live Demo</span>
+      </div>
+      <p class="font-body-md text-body-md text-on-surface-variant mb-6">
+        See our engine instantly convert standard English into Indian Sign Language gloss (Subject-Object-Verb). Type any sentence below.
+      </p>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label class="block text-sm font-bold text-on-surface-variant uppercase tracking-wider mb-2">Input (Standard English)</label>
+          <input type="text" id="demoInput" class="w-full bg-surface-container border-2 border-on-surface p-4 rounded-sm font-body-lg focus:outline-none focus:ring-4 focus:ring-primary transition-all" value="The teacher is teaching the students." placeholder="Type a sentence here...">
+        </div>
+        <div>
+          <label class="block text-sm font-bold text-on-surface-variant uppercase tracking-wider mb-2">Output (ISL Gloss sequence)</label>
+          <div id="demoOutput" class="w-full min-h-[66px] bg-[#FFFBF2] border-2 border-primary border-dashed p-4 rounded-sm flex flex-wrap gap-2 items-center">
+            <!-- Gloss injected here -->
+          </div>
+        </div>
       </div>
     </div>
   </section>
@@ -321,7 +350,7 @@
   </div>
 </footer>
 
-<script>
+<script type="module">
   /* ── Silent Handshake ─────────────────────────────── */
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const forcedColors  = window.matchMedia('(forced-colors: active)').matches;
@@ -375,6 +404,28 @@
       }
     }, 8000);
   });
+
+  /* ── F5.1: Try It Live Widget ──────────────────────── */
+  import { processToISL } from './isl-engine.js';
+  
+  const demoInput = document.getElementById('demoInput');
+  const demoOutput = document.getElementById('demoOutput');
+  
+  function updateDemo() {
+    const text = demoInput.value;
+    if (!text.trim()) {
+      demoOutput.innerHTML = '<span class="text-on-surface-variant italic text-sm">Waiting for input...</span>';
+      return;
+    }
+    const result = processToISL(text);
+    const badges = result.gloss.map(g => 
+      `<span class="bg-surface-container-high border-2 border-outline px-3 py-1 rounded-sm font-label-lg text-on-surface-variant text-sm font-bold">${g.toUpperCase()}</span>`
+    ).join('');
+    demoOutput.innerHTML = badges || '<span class="text-on-surface-variant italic text-sm">No valid signs found.</span>';
+  }
+  
+  demoInput.addEventListener('input', updateDemo);
+  window.addEventListener('load', updateDemo);
 
   /* ── F2.6: Animated stats counters ─────────────────── */
   function animateCounter(id, target, formatter, duration) {
