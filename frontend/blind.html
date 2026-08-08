@@ -289,6 +289,23 @@
 </footer>
 
 <script>
+  /* ── Platform: Mac uses Option (⌥), others use Alt ─── */
+  const IS_MAC = /Mac|iPhone|iPod|iPad/.test(navigator.platform || navigator.userAgent);
+  const MOD_LABEL = IS_MAC ? 'Option' : 'Alt';   // for TTS
+  const MOD_KBD   = IS_MAC ? '⌥' : 'Alt';        // for visible kbd hints
+  // Update all <kbd> elements that show "Alt + X" on page load
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('kbd').forEach(k => {
+      k.textContent = k.textContent.replace(/^Alt\s*/, MOD_KBD + ' ');
+    });
+    document.querySelectorAll('[aria-label]').forEach(el => {
+      el.setAttribute('aria-label', el.getAttribute('aria-label').replace(/Alt\+/g, MOD_LABEL + '+'));
+    });
+    // Update Summarise button aria-label too
+    const sb = document.getElementById('summariseBtn');
+    if (sb) sb.setAttribute('aria-label', `Summarise lesson aloud (${MOD_LABEL}+S)`);
+  });
+
   /* ── Braille maps ─────────────────────────────────── */
   const BRAILLE_EN = {
     "100000":"a","110000":"b","100100":"c","100110":"d","100010":"e",
@@ -840,26 +857,26 @@
   /* ── Keyboard ────────────────────────────────────── */
   window.addEventListener('keydown', e => {
     getAudioCtx(); // Unlock audio context on user gesture
-    if (e.altKey && e.key.toLowerCase() === 'l') {
+    if (e.altKey && (e.key.toLowerCase() === 'l' || e.code === 'KeyL')) {
       e.preventDefault();
       toggleLanguage();
       return;
     }
-    if (e.altKey && e.key.toLowerCase() === 'a') {
+    if (e.altKey && (e.key.toLowerCase() === 'a' || e.code === 'KeyA')) {
       e.preventDefault();
       cycleAudioMode();
       return;
     }
-    if (e.altKey && e.key.toLowerCase() === 't') {
+    if (e.altKey && (e.key.toLowerCase() === 't' || e.code === 'KeyT')) {
       e.preventDefault();
       togglePracticeMode();
       return;
     }
-    if (e.altKey && e.key.toLowerCase() === 'e') {
+    if (e.altKey && (e.key.toLowerCase() === 'e' || e.code === 'KeyE')) {
       e.preventDefault();
       document.getElementById('exportBtn')?.click();
       tts('Exporting exam', 'en-IN');
-    } else if (e.altKey && (e.key === 's' || e.key === 'S')) {
+    } else if (e.altKey && (e.key === 's' || e.key === 'S' || e.code === 'KeyS')) {
       e.preventDefault();
       summariseLesson();
       return;
@@ -1162,7 +1179,7 @@
     const welcomeLines = [
       'Blind Mode is now active. Welcome to Bharat Shakti.',
       'For Braille input: hold S, D, F for left hand dots 3, 2, 1. Hold J, K, L for right hand dots 4, 5, 6. Then tap the space bar to commit the character. To dictate a full sentence with your voice, hold down the space bar.',
-      'Keyboard shortcuts: Press Enter to read all your text aloud. Press Backspace to delete the last character. Press Alt L to switch between English and Hindi Braille. Press Alt A to change audio mode. Press Alt E to export your exam as a PDF. Press Alt S to hear an AI summary of the lesson.',
+      `Keyboard shortcuts: Press Enter to read all your text aloud. Press Backspace to delete the last character. Press ${MOD_LABEL} L to switch between English and Hindi Braille. Press ${MOD_LABEL} A to change audio mode. Press ${MOD_LABEL} E to export your exam as a PDF. Press ${MOD_LABEL} S to hear an AI summary of the lesson.`,
       'You are all set. Say your first Braille letter now.'
     ];
     let idx = 0;
