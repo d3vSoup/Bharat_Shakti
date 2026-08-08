@@ -268,6 +268,36 @@
   /* ── F3.2 Emotion Glow ──────────────────────────── */
   #islStage { transition: box-shadow 0.3s ease; }
 
+  /* ── F4.1 Summarise Modal ──────────────────────────── */
+  #summariseModal {
+    position:fixed; inset:0; z-index:200; display:none;
+    align-items:center; justify-content:center;
+    background:rgba(28,28,24,0.65); backdrop-filter:blur(4px); padding:24px;
+  }
+  #summariseModal.open { display:flex; }
+  #summariseBox {
+    background:#FFFBF2; border:2px solid #1c1c18; border-radius:6px;
+    box-shadow:6px 6px 0 #1c1c18; max-width:520px; width:100%;
+    animation:fadeInItem 0.22s ease both; max-height:85vh; overflow-y:auto;
+  }
+  .sum-header { display:flex; align-items:center; justify-content:space-between; padding:18px 20px 14px; border-bottom:2px solid #d5c4ab; }
+  .sum-title  { font-size:16px; font-weight:800; color:#1c1c18; display:flex; align-items:center; gap:8px; }
+  .sum-close  { background:none; border:none; cursor:pointer; font-size:20px; color:#837560; padding:4px; border-radius:4px; transition:color .15s; }
+  .sum-close:hover { color:#1c1c18; }
+  .sum-body   { padding:20px; }
+  .sum-loading { display:flex; flex-direction:column; align-items:center; gap:12px; padding:24px 0; color:#837560; font-size:13px; }
+  .sum-spinner { width:32px; height:32px; border:3px solid #d5c4ab; border-top-color:#7c5800; border-radius:50%; animation:spin 0.7s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  .sum-bullets { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:10px; }
+  .sum-bullet  { display:flex; gap:10px; align-items:flex-start; padding:12px 14px; background:#f6f3ec; border:1.5px solid #d5c4ab; border-radius:4px; font-size:13px; line-height:1.55; color:#1c1c18; }
+  .sum-bullet-num { width:22px; height:22px; border-radius:50%; background:#ffb800; color:#271900; font-size:11px; font-weight:800; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:1px; }
+  .sum-footer  { display:flex; gap:8px; padding:14px 20px 18px; border-top:1.5px solid #d5c4ab; }
+  .sum-copy    { flex:1; padding:9px 0; font-size:12px; font-weight:700; border:2px solid #7c5800; border-radius:4px; background:none; color:#7c5800; cursor:pointer; transition:background .15s; display:flex; align-items:center; justify-content:center; gap:6px; }
+  .sum-copy:hover { background:#ffdea8; }
+  .sum-close-btn { flex:1; padding:9px 0; font-size:12px; font-weight:700; border:2px solid #1c1c18; border-radius:4px; background:#1c1c18; color:#fcf9f2; cursor:pointer; transition:opacity .15s; }
+  .sum-close-btn:hover { opacity:0.85; }
+  .sum-error { color:#ba1a1a; font-size:13px; text-align:center; padding:16px 0; }
+
   /* Paste textarea */
   #pasteTextarea {
     width: 100%;
@@ -462,6 +492,9 @@
               <span class="material-symbols-outlined text-secondary text-base">forum</span>Dialogue Log
             </h3>
             <div class="flex gap-1.5">
+              <button id="summariseBtn" onclick="openSummariseModal()" class="text-xs font-bold text-primary border border-primary px-2 py-1 rounded-sm hover:bg-primary-container transition-colors flex items-center gap-1" title="AI-summarise this session into 5 revision bullets">
+                <span class="material-symbols-outlined" style="font-size:13px">auto_awesome</span>Summarise
+              </button>
               <button onclick="exportPDF()" class="text-xs font-bold text-secondary border border-secondary px-2 py-1 rounded-sm hover:bg-secondary-container transition-colors flex items-center gap-1" title="Export full 1-hour dialogue as PDF">
                 <span class="material-symbols-outlined" style="font-size:13px">picture_as_pdf</span>Export PDF
               </button>
@@ -1238,11 +1271,91 @@
     }, 6000);
   }
 
+  /* ── F4.1: Summarise Lesson Modal ──────────────────── */
+  let _lastSummaryText = '';
+
+  window.openSummariseModal = async function() {
+    const modal  = document.getElementById('summariseModal');
+    const body   = document.getElementById('sumBody');
+    const footer = document.getElementById('sumFooter');
+    modal.classList.add('open');
+    footer.style.display = 'none';
+    body.innerHTML = '<div class="sum-loading"><div class="sum-spinner"></div><p>Groq AI is summarising your lesson\u2026</p></div>';
+
+    const entries = loadDialogueEntries();
+    if (!entries.length) {
+      body.innerHTML = '<p class="sum-error">No dialogue entries yet. Start a session and speak first!</p>';
+      return;
+    }
+    const transcript = [...entries].reverse()
+      .map(e => (e.lang === 'hi' ? '[HI] ' : '[EN] ') + e.text).join('\n');
+
+    try {
+      const res = await fetch(BACKEND_HTTP + '/api/summarise', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ transcript })
+      });
+      if (!res.ok) throw new Error('API error ' + res.status);
+      const data = await res.json();
+      const bullets = data.bullets || (data.summary ? data.summary.split('\n').filter(Boolean) : []);
+      if (!bullets.length) throw new Error('Empty response');
+
+      _lastSummaryText = bullets.join('\n');
+      body.innerHTML = '<ul class="sum-bullets">' +
+        bullets.map((b,i) =>
+          `<li class="sum-bullet"><span class="sum-bullet-num">${i+1}</span><span>${b.replace(/^[-\u2022\d.]+\s*/,'')}</span></li>`
+        ).join('') + '</ul>';
+      footer.style.display = 'flex';
+    } catch(e) {
+      body.innerHTML = `<p class="sum-error">\u26a0 Could not generate summary.<br><small>${e.message}</small></p>`;
+    }
+  };
+
+  window.closeSummariseModal = function() {
+    document.getElementById('summariseModal').classList.remove('open');
+  };
+
+  window.copySummary = async function() {
+    if (!_lastSummaryText) return;
+    try {
+      await navigator.clipboard.writeText(_lastSummaryText);
+      const btn = document.getElementById('sumCopyBtn');
+      btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:14px">check</span>\u00a0Copied!';
+      setTimeout(() => { btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:14px">content_copy</span>Copy to clipboard'; }, 2000);
+    } catch(e) { alert('Copy failed \u2014 please select text manually.'); }
+  };
+
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') window.closeSummariseModal(); });
+  document.getElementById('summariseModal').addEventListener('click', e => {
+    if (e.target === document.getElementById('summariseModal')) window.closeSummariseModal();
+  });
+
   window.addEventListener('load', () => {
     connectWS();
     restoreDialogueFromStorage(); // Reload up to 1 hour of past dialogue
   });
 </script>
 <script src="gradient-bg.js"></script>
+
+<!-- F4.1: Summarise Lesson Modal -->
+<div id="summariseModal" role="dialog" aria-modal="true" aria-labelledby="sumModalTitle">
+  <div id="summariseBox">
+    <div class="sum-header">
+      <div class="sum-title">
+        <span class="material-symbols-outlined" style="color:#7c5800;font-size:20px">auto_awesome</span>
+        <span id="sumModalTitle">Lesson Summary</span>
+        <span style="font-size:10px;font-weight:700;background:#ffb800;color:#271900;border-radius:99px;padding:1px 7px;margin-left:4px">AI</span>
+      </div>
+      <button class="sum-close" onclick="closeSummariseModal()" aria-label="Close summary">&#10005;</button>
+    </div>
+    <div class="sum-body" id="sumBody"></div>
+    <div class="sum-footer" id="sumFooter" style="display:none">
+      <button class="sum-copy" id="sumCopyBtn" onclick="copySummary()">
+        <span class="material-symbols-outlined" style="font-size:14px">content_copy</span>Copy to clipboard
+      </button>
+      <button class="sum-close-btn" onclick="closeSummariseModal()">Close</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>

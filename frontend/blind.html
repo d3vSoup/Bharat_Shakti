@@ -240,6 +240,9 @@
             <button onclick="readAll()" class="bg-primary-container border-2 border-on-surface border-b-[3px] px-4 py-1.5 text-sm font-bold text-on-primary-fixed hover:brightness-95 transition-all active:border-b-0 active:translate-y-[2px] rounded-sm flex items-center gap-1.5">
               <span class="material-symbols-outlined text-base">volume_up</span>Read All
             </button>
+            <button id="summariseBtn" onclick="summariseLesson()" class="bg-primary-container border-2 border-on-surface border-b-[3px] px-4 py-1.5 text-sm font-bold text-on-primary-fixed hover:brightness-95 transition-all active:border-b-0 active:translate-y-[2px] rounded-sm flex items-center gap-1.5" aria-label="Summarise lesson aloud (Alt+S)">
+              <span class="material-symbols-outlined text-base">auto_awesome</span>Summarise
+            </button>
             <button id="exportBtn" onclick="exportExamPDF()" class="bg-secondary border-2 border-on-surface border-b-[3px] px-4 py-1.5 text-sm font-bold text-white hover:brightness-95 transition-all active:border-b-0 active:translate-y-[2px] rounded-sm flex items-center gap-1.5">
               <span class="material-symbols-outlined text-base">download</span>Export Exam
             </button>
@@ -856,6 +859,9 @@
       e.preventDefault();
       document.getElementById('exportBtn')?.click();
       tts('Exporting exam', 'en-IN');
+    } else if (e.altKey && (e.key === 's' || e.key === 'S')) {
+      e.preventDefault();
+      summariseLesson();
       return;
     }
     // Section Jumping: Ctrl + 1 / 2 / 3
@@ -998,7 +1004,7 @@
     socket.onopen  = ()   => { setWsState('online'); tts('Connected to classroom.'); };
     socket.onmessage = e  => { 
       const d=JSON.parse(e.data); 
-      if(d.type==='broadcast'&&d.text) addFeedItem(d.text); 
+      if(d.type==='broadcast'&&d.text) { _feedTexts.push(d.text); addFeedItem(d.text); } // F4.2 
       else if(d.type==='board_note'&&d.text) addFeedItem("[Board Note] " + d.text);
     };
     socket.onclose = ()   => { setWsState('error'); setTimeout(connectWS,3000); };
@@ -1114,11 +1120,49 @@
     tts(msg, currentLang === 'hi' ? 'hi-IN' : 'en-IN');
   }
 
+  /* ── F4.2: Summarise Lesson (TTS read-aloud) ─────── */
+  const IS_LOCAL_B    = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  const RENDER_HOST_B = 'bharat-shakti-backend.onrender.com';
+  const BACKEND_HTTP_B = IS_LOCAL_B ? 'http://localhost:8000' : `https://${RENDER_HOST_B}`;
+  let _feedTexts = []; // accumulate teacher broadcasts for summary
+
+  window.summariseLesson = async function() {
+    if (!_feedTexts.length) {
+      tts('No classroom feed received yet. Please wait for the teacher to speak.', 'en-IN');
+      return;
+    }
+    tts('Generating lesson summary, please wait.', 'en-IN');
+    const btn = document.getElementById('summariseBtn');
+    if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
+
+    const transcript = _feedTexts.map((t,i) => `[${i+1}] ${t}`).join('\n');
+    try {
+      const res = await fetch(BACKEND_HTTP_B + '/api/summarise', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ transcript })
+      });
+      if (!res.ok) throw new Error('API error');
+      const data = await res.json();
+      const bullets = data.bullets || (data.summary ? data.summary.split('\n').filter(Boolean) : []);
+      if (!bullets.length) throw new Error('Empty summary');
+
+      tts(`Lesson summary. ${bullets.length} key points.`, 'en-IN');
+      bullets.forEach((b, i) => {
+        const clean = b.replace(/^[-\u2022\d.]+\s*/, '');
+        setTimeout(() => tts(`Point ${i+1}: ${clean}`, 'en-IN'), (i+1) * 300);
+      });
+    } catch(e) {
+      tts('Sorry, could not generate summary. Please check your connection.', 'en-IN');
+    } finally {
+      if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+    }
+  };
+
   window.addEventListener('load', () => {
     const welcomeLines = [
       'Blind Mode is now active. Welcome to Bharat Shakti.',
       'For Braille input: hold S, D, F for left hand dots 3, 2, 1. Hold J, K, L for right hand dots 4, 5, 6. Then tap the space bar to commit the character. To dictate a full sentence with your voice, hold down the space bar.',
-      'Keyboard shortcuts: Press Enter to read all your text aloud. Press Backspace to delete the last character. Press Alt L to switch between English and Hindi Braille. Press Alt A to change audio mode. Press Alt E to export your exam as a PDF.',
+      'Keyboard shortcuts: Press Enter to read all your text aloud. Press Backspace to delete the last character. Press Alt L to switch between English and Hindi Braille. Press Alt A to change audio mode. Press Alt E to export your exam as a PDF. Press Alt S to hear an AI summary of the lesson.',
       'You are all set. Say your first Braille letter now.'
     ];
     let idx = 0;

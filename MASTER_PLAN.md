@@ -38,6 +38,8 @@
 | Deaf mode: Subject Mode toggle (General, Science, Maths, Geography) | `frontend/deaf.html` | ✅ Done |
 | Deaf mode: Bookmark ⭐ button + PDF export highlight | `frontend/deaf.html` | ✅ Done |
 | Deaf mode: Teacher Sign Preview panel | `frontend/deaf.html` | ✅ Done |
+| Deaf mode: Summarise Lesson modal (Groq 5-bullet AI summary) | `frontend/deaf.html` | ✅ Done |
+| Blind mode: Summarise Lesson TTS read-aloud (Alt+S) | `frontend/blind.html` | ✅ Done |
 | Landing page: Live animated stats counter + accurate feature badges | `frontend/index.html` | ✅ Done |
 
 ---
@@ -70,8 +72,8 @@
 - [x] **F3.5** Teacher Sign Preview panel — gloss + coverage before broadcasting (deaf.html)
 
 ### PHASE 4 — Summarise Lesson Feature (1.5 hrs, needs Phase 1 first)
-- [ ] **F4.1** "Summarise Lesson" button + modal in deaf.html
-- [ ] **F4.2** Same button + TTS read-aloud in blind.html
+- [x] **F4.1** "Summarise Lesson" button + modal in deaf.html
+- [x] **F4.2** Same button + TTS read-aloud in blind.html (Alt+S shortcut)
 
 ### PHASE 5 — Landing Page Polish (1 hr)
 - [ ] **F5.1** "Try It Live" demo widget on index.html — type → see ISL gloss instantly
