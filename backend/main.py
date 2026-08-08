@@ -1,4 +1,5 @@
 import json
+import base64
 import urllib.request
 import urllib.parse
 from typing import List
@@ -21,20 +22,31 @@ SUPABASE_URL      = os.environ.get("SUPABASE_URL", "")
 SUPABASE_ANON_KEY = os.environ.get("SUPABASE_ANON_KEY", "")
 SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY", "")  # backend-only, never exposed
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
+GROQ_API_KEY   = os.environ.get("GROQ_API_KEY", "")
+TOGETHER_API_KEY = os.environ.get("TOGETHER_API_KEY", "")
 
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
 
-from groq import Groq
-GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
-groq_client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
+# ── Groq client (sentence simplify + lesson summarise) ───────────────
+groq_client = None
+if GROQ_API_KEY:
+    try:
+        from groq import Groq
+        groq_client = Groq(api_key=GROQ_API_KEY)
+        print("Groq client initialised.")
+    except ImportError:
+        print("groq package not installed. Run: pip install groq")
 
-import base64
-TOGETHER_API_KEY = os.environ.get("TOGETHER_API_KEY", "")
+# ── Together AI client (Qwen3-VL board OCR) ───────────────────────
 together_client = None
 if TOGETHER_API_KEY:
-    from together import Together
-    together_client = Together(api_key=TOGETHER_API_KEY)
+    try:
+        from together import Together
+        together_client = Together(api_key=TOGETHER_API_KEY)
+        print("Together AI client initialised.")
+    except ImportError:
+        print("together package not installed. Run: pip install together")
 
 app = FastAPI(title="Bharat Shakti - Inclusive Classroom Backend")
 
@@ -125,19 +137,23 @@ def detect_lang(text: str):
         return JSONResponse({"lang": "en", "confidence": 0.5, "source": "fallback"})
 
 
+# ───────────────────────────────────────────────────────────────────
+# F1.1  /api/simplify   — Groq Llama 3.3 (ISL sentence simplifier)
+# ───────────────────────────────────────────────────────────────────
 @app.post("/api/simplify")
 async def simplify_sentence(request: dict):
     """
     Simplify a complex academic sentence for ISL translation.
     POST body: { "text": "Photosynthesis is the biochemical process..." }
-    Returns: { "simplified": "PLANT SUNLIGHT FOOD MAKE", "source": "groq" | "passthrough" }
+    Returns:   { "simplified": "PLANT SUNLIGHT FOOD MAKE", "source": "groq" | "passthrough" }
+    Degrades gracefully: returns original text if Groq key is missing.
     """
     text = request.get("text", "").strip()
     if not text:
         return {"simplified": "", "source": "empty"}
 
     if not groq_client:
-        return {"simplified": text, "source": "passthrough"}
+        return {"simplified": text, "source": "passthrough", "note": "GROQ_API_KEY not set"}
 
     try:
         response = groq_client.chat.completions.create(
@@ -161,22 +177,25 @@ async def simplify_sentence(request: dict):
         return {"simplified": simplified, "original": text, "source": "groq"}
     except Exception as e:
         print(f"Groq /api/simplify error: {e}")
-        return {"simplified": text, "source": "fallback"}
+        return {"simplified": text, "source": "fallback", "error": str(e)}
 
 
+# ───────────────────────────────────────────────────────────────────
+# F1.2  /api/summarise  — Groq Mixtral (lesson transcript → 5 revision bullets)
+# ───────────────────────────────────────────────────────────────────
 @app.post("/api/summarise")
 async def summarise_lesson(request: dict):
     """
     Summarise a full classroom session transcript into 5 revision bullet points.
     POST body: { "transcript": "full session text as one string..." }
-    Returns: { "summary": "• Point 1\n• Point 2...", "source": "groq" | "error" }
+    Returns:   { "summary": "• Point 1\n• Point 2...", "source": "groq" | "error" }
     """
     transcript = request.get("transcript", "").strip()
     if len(transcript) < 30:
         return {"summary": "Not enough content to summarise. Continue the session and try again.", "source": "error"}
 
     if not groq_client:
-        return {"summary": "Groq API key not configured. See AI_FEATURES.md for setup.", "source": "error"}
+        return {"summary": "Groq API key not configured. Add GROQ_API_KEY to your .env file.", "source": "error"}
 
     try:
         response = groq_client.chat.completions.create(
@@ -200,82 +219,80 @@ async def summarise_lesson(request: dict):
         return {"summary": summary, "source": "groq"}
     except Exception as e:
         print(f"Groq /api/summarise error: {e}")
-        return {"summary": "Error generating summary. Please try again.", "source": "fallback"}
+        return {"summary": "Error generating summary. Please try again.", "source": "fallback", "error": str(e)}
 
 
 @app.post("/api/board-ocr")
 async def board_ocr(file: UploadFile = File(...)):
     """
     Extract text from a whiteboard/blackboard image.
-    Primary: Qwen3-VL-72B via Together AI (handles handwriting + Hindi + diagrams)
+    Primary:  Qwen3-VL-72B via Together AI (handles handwriting + Hindi + diagrams)
     Fallback: Gemini 2.0 Flash Vision
     """
     contents = await file.read()
     extracted_text = ""
     source_used = "none"
 
-    # PRIMARY: Qwen3-VL via Together AI
+    # ── PRIMARY: Qwen3-VL via Together AI
     if together_client:
         try:
             b64_image = base64.b64encode(contents).decode("utf-8")
             mime = file.content_type or "image/jpeg"
-
             response = together_client.chat.completions.create(
                 model="Qwen/Qwen3-VL-72B-Instruct",
-                messages=[
-                    {
-                        "role": "user",
-                        "content": [
-                            {
-                                "type": "text",
-                                "text": (
-                                    "This is a photo of a classroom whiteboard or blackboard. "
-                                    "Extract ALL visible text including: Hindi (Devanagari script), English, "
-                                    "numbers, formulas, headings, and bullet points. "
-                                    "Preserve the structure and reading order. "
-                                    "Return ONLY the extracted text — no commentary, no explanation."
-                                )
-                            },
-                            {
-                                "type": "image_url",
-                                "image_url": {"url": f"data:{mime};base64,{b64_image}"}
-                            }
-                        ]
-                    }
-                ],
+                messages=[{
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": (
+                                "This is a photo of a classroom whiteboard or blackboard. "
+                                "Extract ALL visible text including: Hindi (Devanagari script), English, "
+                                "numbers, formulas, headings, and bullet points. "
+                                "Preserve the structure and reading order. "
+                                "Return ONLY the extracted text — no commentary, no explanation."
+                            )
+                        },
+                        {
+                            "type": "image_url",
+                            "image_url": {"url": f"data:{mime};base64,{b64_image}"}
+                        }
+                    ]
+                }],
                 max_tokens=1024
             )
             extracted_text = response.choices[0].message.content.strip()
             source_used = "qwen3-vl"
+            print(f"Board OCR via Qwen3-VL: {len(extracted_text)} chars extracted")
         except Exception as e:
-            print(f"Together/Qwen3-VL OCR Error: {e}")
+            print(f"Together/Qwen3-VL OCR error: {e}")
             extracted_text = ""
 
-    # FALLBACK: Gemini Vision if Together AI failed or not configured
+    # ── FALLBACK: Gemini 2.0 Flash Vision
     if not extracted_text and GEMINI_API_KEY:
         try:
             model = genai.GenerativeModel("gemini-2.0-flash")
-            image_parts = [{"mime_type": file.content_type, "data": contents}]
             prompt = (
-                "Perform OCR on this whiteboard image. Extract all text accurately including Hindi and English. "
-                "Preserve layout. Return ONLY the extracted text."
+                "Perform OCR on this whiteboard image. Extract all text accurately "
+                "including Hindi and English. Preserve layout. Return ONLY the extracted text."
             )
-            response = model.generate_content([prompt, image_parts[0]])
+            response = model.generate_content([prompt, {"mime_type": file.content_type, "data": contents}])
             extracted_text = response.text.strip()
             source_used = "gemini-fallback"
+            print(f"Board OCR via Gemini fallback: {len(extracted_text)} chars extracted")
         except Exception as e:
-            print(f"Gemini fallback OCR Error: {e}")
-            extracted_text = "OCR failed. Both Qwen3-VL and Gemini Vision unavailable."
+            print(f"Gemini fallback OCR error: {e}")
+            extracted_text = "OCR failed. Please check API key configuration."
             source_used = "error"
 
     if not extracted_text:
-        extracted_text = "Mock Board OCR: Configure TOGETHER_API_KEY or GEMINI_API_KEY to enable live board reading."
+        extracted_text = "Mock OCR: Add TOGETHER_API_KEY or GEMINI_API_KEY to .env to enable live board reading."
         source_used = "mock"
 
-    # Broadcast to all students via WebSocket
+    # Broadcast to all connected students via WebSocket
     await manager.broadcast({"type": "board_note", "text": extracted_text})
-
     return {"status": "success", "extracted_text": extracted_text, "source": source_used}
+
 
 
 @app.websocket("/ws/student/{mode}")

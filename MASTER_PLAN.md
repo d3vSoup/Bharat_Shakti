@@ -33,14 +33,14 @@
 ## 📋 ALL FEATURES TO BUILD — ENUMERATED
 
 ### PHASE 0 — Setup (30 min) — DO THIS FIRST
-- [ ] **F0.1** Add Groq + Together AI to `.env` and `.env.example`
-- [ ] **F0.2** Add `groq` + `together` to `requirements.txt`
-- [ ] **F0.3** Get API keys (URLs in steps below)
+- [x] **F0.1** Add Groq + Together AI to `.env` and `.env.example`
+- [x] **F0.2** Add `groq` + `together` to `requirements.txt`
+- [x] **F0.3** Get API keys (URLs in steps below)
 
 ### PHASE 1 — Backend AI Endpoints (2 hrs)
-- [ ] **F1.1** `/api/simplify` — Groq Llama 3.3: simplify academic sentences → ISL-friendly SOV
-- [ ] **F1.2** `/api/summarise` — Groq Mixtral: full session transcript → 5 revision bullets
-- [ ] **F1.3** Upgrade `/api/board-ocr` — Qwen3-VL via Together AI (Gemini stays as fallback)
+- [x] **F1.1** `/api/simplify` — Groq Llama 3.3: simplify academic sentences → ISL-friendly SOV
+- [x] **F1.2** `/api/summarise` — Groq Mixtral: full session transcript → 5 revision bullets
+- [x] **F1.3** Upgrade `/api/board-ocr` — Qwen3-VL via Together AI (Gemini stays as fallback)
 
 ### PHASE 2 — Quick Frontend Wins (2 hrs, zero backend needed)
 - [x] **F2.1** Braille haptic vibration on commit (blind.html) — `navigator.vibrate()`
