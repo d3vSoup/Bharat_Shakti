@@ -23,12 +23,11 @@ SUPABASE_ANON_KEY = os.environ.get("SUPABASE_ANON_KEY", "")
 SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY", "")  # backend-only, never exposed
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 GROQ_API_KEY   = os.environ.get("GROQ_API_KEY", "")
-TOGETHER_API_KEY = os.environ.get("TOGETHER_API_KEY", "")
 
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
 
-# ── Groq client (sentence simplify + lesson summarise) ───────────────
+# ── Groq client (text simplify + summarise + vision OCR) ─────────────────
 groq_client = None
 if GROQ_API_KEY:
     try:
@@ -37,16 +36,6 @@ if GROQ_API_KEY:
         print("Groq client initialised.")
     except ImportError:
         print("groq package not installed. Run: pip install groq")
-
-# ── Together AI client (Qwen3-VL board OCR) ───────────────────────
-together_client = None
-if TOGETHER_API_KEY:
-    try:
-        from together import Together
-        together_client = Together(api_key=TOGETHER_API_KEY)
-        print("Together AI client initialised.")
-    except ImportError:
-        print("together package not installed. Run: pip install together")
 
 app = FastAPI(title="Bharat Shakti - Inclusive Classroom Backend")
 
@@ -226,20 +215,20 @@ async def summarise_lesson(request: dict):
 async def board_ocr(file: UploadFile = File(...)):
     """
     Extract text from a whiteboard/blackboard image.
-    Primary:  Qwen3-VL-72B via Together AI (handles handwriting + Hindi + diagrams)
+    Primary:  Groq Qwen 3.6 27B Vision (handles handwriting + Hindi + diagrams)
     Fallback: Gemini 2.0 Flash Vision
     """
     contents = await file.read()
     extracted_text = ""
     source_used = "none"
 
-    # ── PRIMARY: Qwen3-VL via Together AI
-    if together_client:
+    # ── PRIMARY: Groq Qwen Vision ───────────────────────────────────
+    if groq_client:
         try:
             b64_image = base64.b64encode(contents).decode("utf-8")
             mime = file.content_type or "image/jpeg"
-            response = together_client.chat.completions.create(
-                model="Qwen/Qwen3-VL-72B-Instruct",
+            response = groq_client.chat.completions.create(
+                model="meta-llama/llama-4-scout-17b-16e-instruct",
                 messages=[{
                     "role": "user",
                     "content": [
@@ -262,13 +251,13 @@ async def board_ocr(file: UploadFile = File(...)):
                 max_tokens=1024
             )
             extracted_text = response.choices[0].message.content.strip()
-            source_used = "qwen3-vl"
-            print(f"Board OCR via Qwen3-VL: {len(extracted_text)} chars extracted")
+            source_used = "groq-llama4-vision"
+            print(f"Board OCR via Groq Llama 4 Vision: {len(extracted_text)} chars extracted")
         except Exception as e:
-            print(f"Together/Qwen3-VL OCR error: {e}")
+            print(f"Groq Vision OCR error: {e}")
             extracted_text = ""
 
-    # ── FALLBACK: Gemini 2.0 Flash Vision
+    # ── FALLBACK: Gemini 2.0 Flash Vision ─────────────────────────
     if not extracted_text and GEMINI_API_KEY:
         try:
             model = genai.GenerativeModel("gemini-2.0-flash")
@@ -286,13 +275,12 @@ async def board_ocr(file: UploadFile = File(...)):
             source_used = "error"
 
     if not extracted_text:
-        extracted_text = "Mock OCR: Add TOGETHER_API_KEY or GEMINI_API_KEY to .env to enable live board reading."
+        extracted_text = "Mock OCR: Add GROQ_API_KEY to .env to enable live board reading."
         source_used = "mock"
 
     # Broadcast to all connected students via WebSocket
     await manager.broadcast({"type": "board_note", "text": extracted_text})
     return {"status": "success", "extracted_text": extracted_text, "source": source_used}
-
 
 
 @app.websocket("/ws/student/{mode}")
