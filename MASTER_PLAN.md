@@ -51,11 +51,11 @@
 - [x] **F2.6** Live animated stats counters (index.html) — 18M+, 150+, <50ms
 
 ### PHASE 3 — Deaf Mode AI UI (3 hrs, needs Phase 1 first)
-- [ ] **F3.1** AI Simplification bar — before/after panel showing raw vs. Groq-simplified text (deaf.html)
-- [ ] **F3.2** Emotion Overlay — Web Audio API pitch/volume → coloured glow on ISL Stage (deaf.html)
-- [ ] **F3.3** Subject Mode toggle — Science/Maths/Geography loads curated ISL sub-dictionaries (deaf.html)
-- [ ] **F3.4** Bookmark ⭐ button on each dialogue entry → highlighted in exported PDF (deaf.html)
-- [ ] **F3.5** Teacher Sign Preview panel — gloss + coverage before broadcasting (deaf.html)
+- [x] **F3.1** AI Simplification bar — before/after panel showing raw vs. Groq-simplified text (deaf.html)
+- [x] **F3.2** Emotion Overlay — Web Audio API pitch/volume → coloured glow on ISL Stage (deaf.html)
+- [x] **F3.3** Subject Mode toggle — Science/Maths/Geography loads curated ISL sub-dictionaries (deaf.html)
+- [x] **F3.4** Bookmark ⭐ button on each dialogue entry → highlighted in exported PDF (deaf.html)
+- [x] **F3.5** Teacher Sign Preview panel — gloss + coverage before broadcasting (deaf.html)
 
 ### PHASE 4 — Summarise Lesson Feature (1.5 hrs, needs Phase 1 first)
 - [ ] **F4.1** "Summarise Lesson" button + modal in deaf.html

@@ -235,6 +235,39 @@
     color: #2f486a;
   }
 
+  /* ── F3.3 Subject Mode tabs ─────────────────────── */
+  .subject-tab {
+    flex: 1; padding: 5px 4px; font-size: 11px; font-weight: 700;
+    letter-spacing: 0.03em; border: 2px solid #d5c4ab; background: #f6f3ec;
+    color: #514532; cursor: pointer; transition: all 0.15s ease; text-align: center;
+  }
+  .subject-tab:first-child { border-radius: 4px 0 0 4px; }
+  .subject-tab:last-child  { border-radius: 0 4px 4px 0; }
+  .subject-tab:not(:first-child) { border-left: none; }
+  .subject-tab.active { background: #7c5800; color: #fff; border-color: #1c1c18; box-shadow: 0 2px 0 #1c1c18; }
+  .subject-tab:hover:not(.active) { background: #ebe8e1; }
+
+  /* ── F3.1 AI Simplify Bar ───────────────────────── */
+  #simplifyBar {
+    display: none; gap: 8px; align-items: flex-start;
+    background: #f1eee7; border: 2px solid #d5c4ab; border-radius: 4px;
+    padding: 10px 12px; margin-bottom: 12px; animation: fadeInItem 0.2s ease both;
+  }
+  #simplifyBar.visible { display: flex; }
+  .simplify-orig   { font-size:11px; color:#837560; font-style:italic; line-height:1.4; flex:1; }
+  .simplify-arrow  { font-size:16px; color:#7c5800; flex-shrink:0; margin-top:1px; }
+  .simplify-result { font-size:12px; font-weight:800; color:#271900; letter-spacing:0.05em; flex:1; line-height:1.4; }
+  .simplify-badge  { font-size:9px; font-weight:700; letter-spacing:.06em; background:#ffb800; color:#271900; border-radius:99px; padding:1px 6px; flex-shrink:0; margin-top:2px; }
+
+  /* ── F3.4 Bookmark ──────────────────────────────── */
+  .bookmark-btn { background:none; border:none; cursor:pointer; font-size:16px; color:#d5c4ab; padding:2px 4px; border-radius:4px; transition:color .15s,transform .15s; flex-shrink:0; }
+  .bookmark-btn:hover { color:#ffb800; transform:scale(1.15); }
+  .bookmark-btn.bookmarked { color:#ffb800; }
+  .transcript-entry.bookmarked-entry { background:#fffbf0 !important; border-color:#ffb800 !important; }
+
+  /* ── F3.2 Emotion Glow ──────────────────────────── */
+  #islStage { transition: box-shadow 0.3s ease; }
+
   /* Paste textarea */
   #pasteTextarea {
     width: 100%;
@@ -323,6 +356,18 @@
             <button id="langHi"   class="lang-btn" onclick="setLang('hi')" aria-pressed="false" aria-label="Switch to Hindi"><span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px">translate</span> हिन्दी</button>
           </div>
           <p class="text-xs text-on-surface-variant mt-1 flex items-center gap-1"><span class="material-symbols-outlined" style="font-size:12px">autorenew</span> Auto detects Hindi &amp; English via Google Translate</p>
+        </div>
+
+        <!-- F3.3: Subject Mode Toggle -->
+        <div class="mb-4">
+          <p class="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-2">Subject Mode</p>
+          <div class="flex">
+            <button class="subject-tab active" id="subj-general" onclick="setSubject('general')" aria-pressed="true" >📚 General</button>
+            <button class="subject-tab"        id="subj-science" onclick="setSubject('science')" aria-pressed="false">🔬 Science</button>
+            <button class="subject-tab"        id="subj-maths"   onclick="setSubject('maths')"   aria-pressed="false">📐 Maths</button>
+            <button class="subject-tab"        id="subj-geo"     onclick="setSubject('geo')"     aria-pressed="false">🌍 Geography</button>
+          </div>
+          <p class="text-xs text-on-surface-variant mt-1">Loads specialized ISL glosses for the selected subject</p>
         </div>
 
         <!-- Input Mode Tabs -->
@@ -477,6 +522,14 @@
           </div>
         </div>
 
+        <!-- F3.1: AI Simplification Bar -->
+        <div id="simplifyBar" aria-live="polite" aria-label="AI simplified ISL text">
+          <span class="simplify-badge">AI</span>
+          <span class="simplify-orig" id="simplifyOrig"></span>
+          <span class="simplify-arrow material-symbols-outlined" style="font-size:18px">arrow_forward</span>
+          <span class="simplify-result" id="simplifyResult"></span>
+        </div>
+
         <!-- Gloss pills (SOV sequence) -->
         <div id="glossPills" class="flex flex-wrap gap-1.5 min-h-8 mb-3 justify-center"></div>
 
@@ -517,7 +570,10 @@
   /* ── State ────────────────────────────────────────── */
   let currentLang = 'auto'; // 'auto' | 'en' | 'hi'
   let currentMode = 'mic';
+  let currentSubject = 'general'; // F3.3
   let signSpeedMs = 1200;
+  // F3.2 Emotion Glow
+  let audioCtx = null, audioAnalyser = null, audioSource = null, glowRaf = null;
   let activeAnimation = null;
   let isRecording = false;
   let clipboardWatching = false;
@@ -717,6 +773,7 @@
     micLabel.textContent = 'Recording… Stop';
     micIcon.textContent = 'mic';
     micBars.innerHTML = '<div class="flex items-end gap-1 h-6 text-error"><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div></div>';
+    startEmotionGlow(); // F3.2
   }
 
   function stopRecording() {
@@ -729,6 +786,7 @@
     micBars.innerHTML = '';
     interimBar.textContent = 'Speak to see live transcription…';
     interimBar.className = 'min-h-10 bg-surface-container border-2 border-dashed border-outline p-3 rounded-sm text-sm text-on-surface-variant italic mb-1';
+    stopEmotionGlow(); // F3.2
   }
 
   micBtn.addEventListener('click', () => isRecording ? stopRecording() : startRecording());
@@ -761,6 +819,31 @@
   }
 
 
+  /* ── F3.3 Subject Mode ─────────────────────────────── */
+  const SUBJECT_GLOSSES = {
+    science: { photosynthesis:'PLANT FOOD MAKE', chlorophyll:'PLANT GREEN COLOUR', mitochondria:'CELL ENERGY', nucleus:'CELL CENTRE', osmosis:'WATER MOVE MEMBRANE', evaporation:'WATER VAPOUR BECOME', condensation:'VAPOUR WATER BECOME', atom:'SMALL PARTICLE', molecule:'ATOMS JOIN', gravity:'PULL DOWN FORCE', velocity:'SPEED DIRECTION', acceleration:'SPEED INCREASE', ecosystem:'NATURE LIVING TOGETHER', habitat:'ANIMAL HOME PLACE', reproduction:'LIVING THING MAKE NEW' },
+    maths:   { equation:'TWO SIDE EQUAL', fraction:'PART OF WHOLE', percentage:'OUT OF HUNDRED', multiplication:'TIMES', division:'SHARE EQUAL PARTS', subtraction:'MINUS TAKE AWAY', addition:'PLUS ADD', geometry:'SHAPES STUDY', circumference:'CIRCLE OUTSIDE LINE LENGTH', diameter:'CIRCLE MIDDLE LINE', radius:'CIRCLE CENTRE TO EDGE', hypotenuse:'TRIANGLE LONGEST SIDE', probability:'CHANCE HAPPEN', average:'ADD ALL DIVIDE COUNT', prime:'NUMBER ONE FACTOR ONLY' },
+    geo:     { latitude:'HORIZONTAL LINE EARTH', longitude:'VERTICAL LINE EARTH', equator:'EARTH MIDDLE LINE', continent:'LARGE LAND AREA', peninsula:'LAND THREE SIDES WATER', archipelago:'ISLAND GROUP', precipitation:'RAIN SNOW FALL', erosion:'SOIL ROCK WASH AWAY', deforestation:'TREES CUT REMOVE', urbanisation:'VILLAGE CITY BECOME', migration:'PEOPLE MOVE PLACE', population:'PEOPLE NUMBER', monsoon:'RAIN SEASON', delta:'RIVER MOUTH TRIANGLE', plateau:'HIGH FLAT LAND' },
+    general: {}
+  };
+  window.setSubject = function(subj) {
+    currentSubject = subj;
+    ['general','science','maths','geo'].forEach(s => document.getElementById('subj-'+s).classList.toggle('active', s===subj));
+    const names = {general:'General',science:'Science',maths:'Maths',geo:'Geography'};
+    showToast('Subject: '+names[subj]);
+  };
+  function applySubjectGloss(text) {
+    const map = SUBJECT_GLOSSES[currentSubject] || {};
+    let out = text;
+    for (const [term, gloss] of Object.entries(map)) out = out.replace(new RegExp('\\b'+term+'\\b','gi'), gloss);
+    return out;
+  }
+  function showToast(msg) {
+    let t = document.getElementById('_toast');
+    if (!t) { t = document.createElement('div'); t.id='_toast'; t.style.cssText='position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:99;background:#1c1c18;color:#fcf9f2;font-size:12px;font-weight:700;padding:7px 18px;border-radius:99px;opacity:0;transition:opacity .25s;pointer-events:none'; document.body.appendChild(t); }
+    t.textContent=msg; t.style.opacity='1'; clearTimeout(t._tid); t._tid=setTimeout(()=>{t.style.opacity='0';},1800);
+  }
+
   /* ── Core Broadcast & Render ──────────────────────── */
   function broadcastText(text, lang) {
     if (socket && socket.readyState === WebSocket.OPEN) {
@@ -768,7 +851,7 @@
     }
     saveDialogueEntry(text, lang);
     addTranscriptEntry(text, lang);
-    renderISL(text, lang);
+    simplifyAndRender(text, lang); // F3.1
   }
 
   /* ── localStorage Dialogue (1-hour TTL) ─────────────── */
@@ -799,6 +882,56 @@
     [...entries].reverse().forEach(e => addTranscriptEntry(e.text, e.lang, e.ts));
   }
 
+  /* ── F3.1 AI Simplify + F3.5 Teacher Preview ──────── */
+  const simplifyBar    = document.getElementById('simplifyBar');
+  const simplifyOrig   = document.getElementById('simplifyOrig');
+  const simplifyResult = document.getElementById('simplifyResult');
+
+  async function simplifyAndRender(text, lang) {
+    const subjectApplied = applySubjectGloss(text);
+    // F3.5: preview immediately
+    const prev = processToISL(subjectApplied, lang);
+    showPreview(prev.gloss, prev.gestures);
+    // Short phrases or Hindi: skip AI
+    if (lang === 'hi' || subjectApplied.split(' ').length <= 5) {
+      hideSimplifyBar();
+      renderISL(subjectApplied, lang);
+      return;
+    }
+    try {
+      const res = await fetch(BACKEND_HTTP+'/api/simplify', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({text:subjectApplied}) });
+      if (res.ok) {
+        const data = await res.json();
+        const simplified = data.simplified || subjectApplied;
+        showSimplifyBar(subjectApplied, simplified);
+        renderISL(simplified, lang);
+        return;
+      }
+    } catch(e) {}
+    hideSimplifyBar();
+    renderISL(subjectApplied, lang);
+  }
+
+  function showSimplifyBar(orig, simplified) {
+    simplifyOrig.textContent = orig;
+    simplifyResult.textContent = simplified;
+    simplifyBar.classList.add('visible');
+    clearTimeout(simplifyBar._hide);
+    simplifyBar._hide = setTimeout(() => hideSimplifyBar(), 12000);
+  }
+  function hideSimplifyBar() { simplifyBar.classList.remove('visible'); }
+
+  /* F3.5: Teacher Sign Preview */
+  function showPreview(gloss, gestures) {
+    if (!gloss.length) return;
+    const words   = [...new Set(gestures.map(g => g.word).filter(Boolean))];
+    const covered = words.filter(w => gestures.some(g => g.word===w && (g.type==='gif'||g.type==='still'))).length;
+    glossRibbon.innerHTML = '<span style="font-size:10px;font-weight:800;letter-spacing:.06em;background:#ffb800;color:#271900;border-radius:99px;padding:1px 7px;margin-right:6px">PREVIEW</span>'
+      + 'ISL: ' + gloss.join(' — ')
+      + (words.length ? ' <span style="margin-left:8px;font-size:10px;color:#514532">('+covered+'/'+words.length+' signed)</span>' : '');
+    setTimeout(() => { glossRibbon.textContent = 'ISL Gloss (SOV): '+gloss.join(' — '); }, 1800);
+  }
+
   /* ── Export dialogue log as PDF (full 1-hour history) ── */
   window.exportPDF = function() {
     const entries = loadDialogueEntries();
@@ -809,12 +942,16 @@
 
     const now = new Date().toLocaleString('en-IN', { dateStyle: 'long', timeStyle: 'short' });
 
+    const bookmarked = getBookmarkedIds();
     const rows = [...entries].reverse().map(e => {
       const time = new Date(e.ts).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
       const langLabel  = e.lang === 'hi' ? 'HI' : 'EN';
       const langColour = e.lang === 'hi' ? '#7c5800' : '#476083';
+      const isBm = bookmarked.has(String(e.ts));
+      const rowBg = isBm ? 'background:#fffbf0' : '';
       return [
-        '<tr>',
+        `<tr style="${rowBg}">`,
+        isBm ? `<td style="padding:7px 6px;border:1px solid #e0e0e0;text-align:center;font-size:14px">⭐</td>` : `<td style="padding:7px 6px;border:1px solid #e0e0e0"></td>`,
         `<td style="padding:7px 10px;border:1px solid #e0e0e0;font-weight:800;color:${langColour};font-size:11px">${langLabel}</td>`,
         `<td style="padding:7px 10px;border:1px solid #e0e0e0;font-size:13px;line-height:1.5">${e.text}</td>`,
         `<td style="padding:7px 10px;border:1px solid #e0e0e0;color:#888;font-size:11px;font-family:monospace">${time}</td>`,
@@ -836,6 +973,7 @@
       'thead th { background:#f5f5f0; padding:8px 10px; border:1px solid #ccc; font-size:11px;',
       '  text-align:left; font-family:Arial,sans-serif; font-weight:800; text-transform:uppercase; letter-spacing:.06em; color:#555; }',
       'tbody tr:nth-child(even) td { background:#fafaf8; }',
+      'tr[style*="fffbf0"] td { background:#fffbf0 !important; border-left:3px solid #ffb800 !important; }',
       '.footer { margin-top:20px; font-size:10px; color:#aaa; text-align:center; border-top:1px solid #eee; padding-top:10px; }',
       '@media print { body { padding:20px 28px; } }',
       '</style></head><body>',
@@ -844,7 +982,7 @@
       `<p>Exported on ${now} &nbsp;&middot;&nbsp; ${entries.length} entries &nbsp;&middot;&nbsp; PS4 Inclusive Education</p>`,
       '</div>',
       '<table><thead><tr>',
-      '<th style="width:52px">Lang</th><th>Speech / Caption</th><th style="width:80px">Time</th>',
+      '<th style="width:32px">⭐</th><th style="width:52px">Lang</th><th>Speech / Caption</th><th style="width:80px">Time</th>',
       '</tr></thead><tbody>',
       rows,
       '</tbody></table>',
@@ -860,13 +998,30 @@
     win.document.close();
   };
 
+  /* ── F3.4: Bookmarks ──────────────────────────────── */
+  const BM_KEY = 'bs_bookmarks_v1';
+  function getBookmarkedIds() {
+    try { return new Set(JSON.parse(localStorage.getItem(BM_KEY)||'[]').map(String)); } catch(e) { return new Set(); }
+  }
+  function toggleBookmark(tsMs, btn) {
+    const ids = getBookmarkedIds(), key = String(tsMs);
+    if (ids.has(key)) { ids.delete(key); btn.classList.remove('bookmarked'); btn.title='Bookmark'; btn.textContent='☆'; }
+    else              { ids.add(key);    btn.classList.add('bookmarked');    btn.title='Bookmarked'; btn.textContent='★'; }
+    const entry = btn.closest('.transcript-entry');
+    if (entry) entry.classList.toggle('bookmarked-entry', ids.has(key));
+    try { localStorage.setItem(BM_KEY, JSON.stringify([...ids])); } catch(e) {}
+  }
+
   function addTranscriptEntry(text, lang = 'en', tsMs = null) {
     if (feedBox.querySelector('p.placeholder-msg')) feedBox.innerHTML = '';
     const now = tsMs
       ? new Date(tsMs).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit'})
       : new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    const entryTs = tsMs || Date.now();
+    const now2 = new Date(entryTs).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    const isBm = getBookmarkedIds().has(String(entryTs));
     const div = document.createElement('div');
-    div.className = 'transcript-entry flex gap-3 items-start p-3 bg-surface-container-low border-2 border-outline-variant rounded-sm';
+    div.className = 'transcript-entry flex gap-3 items-start p-3 bg-surface-container-low border-2 border-outline-variant rounded-sm' + (isBm ? ' bookmarked-entry' : '');
     div.innerHTML = `
       <div class="w-7 h-7 bg-secondary-container border border-outline rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold text-on-secondary-container">
         <span class="material-symbols-outlined" style="font-size:13px">person</span>
@@ -878,8 +1033,10 @@
           </span>
         </div>
         <p class="text-sm text-on-surface leading-relaxed">${text}</p>
-        <p class="text-xs text-on-surface-variant mt-0.5 font-mono">${now}</p>
-      </div>`;
+        <p class="text-xs text-on-surface-variant mt-0.5 font-mono">${now2}</p>
+      </div>
+      <button class="bookmark-btn${isBm ? ' bookmarked' : ''}" title="${isBm ? 'Bookmarked' : 'Bookmark'}" aria-label="Bookmark entry" data-ts="${entryTs}">${isBm ? '★' : '☆'}</button>`;
+    div.querySelector('.bookmark-btn').addEventListener('click', function() { toggleBookmark(entryTs, this); });
     feedBox.prepend(div);
   }
 
@@ -972,6 +1129,39 @@
           (curGesture?.type === 'gif' || curGesture?.type === 'still') ? 'contain' : 'cover';
       }
     );
+  }
+
+  /* ── F3.2 Emotion Glow via Web Audio API ─────────── */
+  async function startEmotionGlow() {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({audio:true,video:false});
+      audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+      audioAnalyser = audioCtx.createAnalyser(); audioAnalyser.fftSize = 256;
+      audioSource = audioCtx.createMediaStreamSource(stream);
+      audioSource.connect(audioAnalyser);
+      const dataArr = new Uint8Array(audioAnalyser.frequencyBinCount);
+      const stage = document.getElementById('islStage');
+      function loop() {
+        if (!audioAnalyser) return;
+        audioAnalyser.getByteFrequencyData(dataArr);
+        const avg = dataArr.reduce((a,b)=>a+b,0)/dataArr.length;
+        const norm = Math.min(avg/80,1);
+        let r,g,b;
+        if (norm < 0.5) { r=Math.round(70+norm*2*(255-70)); g=Math.round(130+norm*2*(184-130)); b=Math.round(220-norm*2*220); }
+        else            { r=255; g=Math.round(184-(norm-0.5)*2*184); b=0; }
+        stage.style.boxShadow = `0 0 ${Math.round(8+norm*24)}px rgba(${r},${g},${b},${(0.4+norm*0.5).toFixed(2)})`;
+        glowRaf = requestAnimationFrame(loop);
+      }
+      loop();
+    } catch(e) {}
+  }
+  function stopEmotionGlow() {
+    if (glowRaf) { cancelAnimationFrame(glowRaf); glowRaf=null; }
+    if (audioSource) { try{audioSource.disconnect();}catch(e){} audioSource=null; }
+    if (audioCtx)    { try{audioCtx.close();}catch(e){}    audioCtx=null; }
+    audioAnalyser = null;
+    const stage = document.getElementById('islStage');
+    if (stage) stage.style.boxShadow='';
   }
 
   /* ── WebSocket ───────────────────────────────────── */
