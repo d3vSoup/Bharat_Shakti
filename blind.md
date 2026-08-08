@@ -63,6 +63,12 @@ Before listing features, let's think about what a blind student's school day act
 - Protected TTS queue prevents WebSocket connection announcements from interrupting the welcome guide.
 - Chrome synthesis 10s heartbeat keepalive prevents SpeechSynthesis from stalling during longer sessions.
 
+### Haptic Vibration Feedback (Braille Commit)
+- Uses `navigator.vibrate([15, 30, 15])` on character/dot commit for physical tactile confirmation on supported mobile & tablet devices.
+
+### Groq Llama 4 Vision Live Board OCR Sync
+- Powered by `/api/board-ocr` (Groq Llama 4 Scout Vision / Gemini Flash fallback) for real-time handwriting & Hindi OCR extraction, auto-announced aloud via SpeechSynthesis when broadcast.
+
 ---
 
 ## ⚙️ The Core Architecture & Engine (Technical Deep Dive)

@@ -188,93 +188,50 @@ This makes it deployable in **government schools, NGOs, and institutions** with 
 
 > *"What turns an impressive demo into a product that deaf students actually depend on?"*
 
-### Tier 1: Near-Term — Can Build This Week
+### Tier 1: Near-Term & Built Features
 
-#### 🔁 12. Two-Way Communication via MediaPipe (Student Signs Back)
-
+#### 🔁 12. Two-Way Communication via MediaPipe (Student Signs Back) — *Planned (Moonshot)*
 **Right now, communication is one-way: teacher speaks → student sees signs.**
-
 What if the deaf student could **raise their hand, sign a question via their webcam**, and the teacher sees the text on their screen?
-
-- Use **Google MediaPipe Hands** (runs entirely in-browser, no server needed) to track 21 hand landmarks per hand in real-time.
+- Use **Google MediaPipe Hands** to track 21 hand landmarks in real-time.
 - Classify detected hand poses against our ISL dictionary in reverse.
-- Display the recognised text on the **teacher's dashboard** as a live chat message.
-
-**Why this is a game-changer:** It turns Bharat Shakti from a broadcast tool into a **conversation**. A deaf student can finally participate in class discussions, ask questions, and answer the teacher — all in ISL, translated back to text. Nobody has built this for ISL in a classroom context.
 
 ---
 
-#### 🧠 13. AI Sentence Simplification (Complex → Sign-Friendly)
-
-Academic language is complex. A teacher might say:
-> *"Photosynthesis is the biochemical process by which chloroplasts convert solar radiation into glucose."*
-
-That sentence has zero ISL gesture matches. Fingerspelling every word makes it unintelligible.
-
-**The fix:** Before ISL lookup, run the sentence through an **AI simplification layer** that rewrites it as:
-> *"PLANT MAKE FOOD FROM SUNLIGHT"*
-
-This dramatically increases ISL dictionary coverage and produces signing output that actually communicates meaning, not just letters.
-
-- Can use a lightweight LLM (Gemini Nano / GPT-4o-mini) for rewriting.
-- Preserves core meaning while reducing vocabulary to high-frequency ISL words.
-- Shows both the original and simplified version in the gloss ribbon so the student learns the real word too.
+#### 🧠 13. AI Sentence Simplification (Complex → Sign-Friendly) — ✅ **BUILT (Phase 1 & 3)**
+Academic language is complex. A teacher might say: *"Photosynthesis is the biochemical process by which chloroplasts convert solar radiation into glucose."*
+- **Implementation**: Powered by Groq Llama 3.3 (`/api/simplify`). Rewrites sentences to simple ISL SOV text (e.g. `PLANTS CONVERT SUNLIGHT INTO GLUCOSE`).
+- Displays raw vs. simplified text in a live **AI Simplification Bar** (`#simplifyBar`) in `deaf.html`.
 
 ---
 
-#### 👁️ 14. Teacher Sign Preview (See Before You Broadcast)
-
-**Before the teacher's words go live to every student screen, let them preview the ISL output first.**
-
-A small "Preview" button next to the Translate button that shows the teacher:
-- Which words will render as **animated GIFs** (exact match).
-- Which words will be **fingerspelled** (no match).
-- The **SOV-reordered gloss** so they can verify the grammar looks right.
-- A **coverage percentage**: "78% of your sentence has direct ISL signs."
-
-If the coverage is low, the teacher can rephrase before broadcasting. This gives teachers **agency and confidence** in the tool.
+#### 👁️ 14. Teacher Sign Preview & Coverage Badge — ✅ **BUILT (Phase 2 & 3)**
+Before broadcasting/animating:
+- **Coverage Badge (`#coverageBadge`)**: Displays real-time ISL gesture coverage percentage (e.g., `75% ISL (3/4 signs)`).
+- **Sign Preview (`#glossRibbon`)**: Shows a `PREVIEW` banner with the SOV gloss breakdown immediately on speech capture.
 
 ---
 
-#### ⭐ 15. Bookmark Moments During Lecture
-
-During a live lecture, a deaf student might want to mark a specific moment:
-- *"I didn't understand this part"*
-- *"This is important for the exam"*
-- *"I want to ask about this later"*
-
-A simple **⭐ Bookmark** button that timestamps the current moment in the dialogue log. When the PDF is exported, bookmarked moments are **highlighted in yellow** with the student's notes.
-
-This turns the PDF from a passive transcript into an **active study guide**.
+#### ⭐ 15. Bookmark Moments During Lecture — ✅ **BUILT (Phase 3)**
+- **Bookmark Button (`.bookmark-btn`)**: Click ⭐ on any dialogue entry to save it to `localStorage` with a warm gold highlight.
+- **PDF Export**: Bookmarked entries are exported with a **⭐ column** and **highlighted gold background**.
 
 ---
 
-### Tier 2: Medium-Term — Stretch Goals
+### Tier 2: Medium-Term — Implemented & Stretch Goals
 
-#### 🎭 16. Emotion & Tone Overlay (What the Voice Conveys)
-
-Deaf students miss 100% of vocal tone — sarcasm, urgency, excitement, gentleness, anger. These carry as much meaning as the words themselves.
-
-**Solution:** Analyse speech prosody (pitch, speed, volume) from the Web Speech API or audio stream and overlay visual cues on the ISL viewer:
-- 🔴 **Urgent/Loud** → Red pulsing border + faster sign speed.
-- 💙 **Calm/Gentle** → Blue ambient glow + slower pacing.
-- 💛 **Excited/Happy** → Golden sparkle animation.
-- ⚡ **Emphasis** → Sign image briefly enlarges (zoom pulse).
-
-This adds the **emotional layer** that pure text-to-sign translation strips away. The student doesn't just see what the teacher said — they feel *how* they said it.
+#### 🎭 16. Emotion & Tone Overlay (Web Audio Prosody Glow) — ✅ **BUILT (Phase 3)**
+- Uses native **Web Audio API (`AnalyserNode`)** attached to the microphone stream.
+- Dynamically renders an **emotional glow aura** around `#islStage`:
+  - 🔵 **Calm/Soft** → Soft blue ambient glow
+  - 🟡 **Moderate** → Warm amber glow
+  - 🔴 **Loud/Urgent** → Pulsing red aura
 
 ---
 
-#### 📚 17. Subject-Specific ISL Vocabularies (Switch by Class)
-
-ISL has specialised signs for Science, Mathematics, Geography, and History — but they're different from everyday vocabulary.
-
-Allow the teacher to toggle a **subject mode**:
-- **Science mode** → loads signs for "atom", "cell", "experiment", "microscope"
-- **Maths mode** → loads signs for "fraction", "equation", "triangle", "divide"
-- **Geography mode** → loads signs for "river", "mountain", "climate", "earthquake"
-
-Each mode activates a curated ISL sub-dictionary. This dramatically improves sign coverage for academic content and avoids fingerspelling technical terms that have real ISL equivalents.
+#### 📚 17. Subject-Specific ISL Vocabularies — ✅ **BUILT (Phase 3)**
+- 4-tab **Subject Mode** toggle in `deaf.html`: 📚 General / 🔬 Science / 📐 Maths / 🌍 Geography.
+- Activates specialized ISL gloss dictionaries (e.g., Science maps "photosynthesis" → `PLANT FOOD MAKE`, Maths maps "equation" → `TWO SIDE EQUAL`).
 
 ---
 

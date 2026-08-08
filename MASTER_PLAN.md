@@ -26,7 +26,19 @@
 | Deaf mode: Clean Printable Dialogue PDF Export | `frontend/deaf.html` | ✅ Done |
 | Landing page: TTS Pronunciation Fixes & Auto-route Audio Announcements | `frontend/index.html` | ✅ Done |
 | Backend: FastAPI + WebSocket broadcast + language detection | `backend/main.py` | ✅ Done |
-| Backend: Gemini Vision board OCR | `backend/main.py` | ✅ Done |
+| Backend: Groq Llama 3.3 Sentence Simplification (`/api/simplify`) | `backend/main.py` | ✅ Done |
+| Backend: Groq Llama 3.3 Lesson Summarisation (`/api/summarise`) | `backend/main.py` | ✅ Done |
+| Backend: Groq Llama 4 Scout Vision Board OCR (`/api/board-ocr`) | `backend/main.py` | ✅ Done |
+| Blind mode: Braille Haptic Vibration Feedback | `frontend/blind.html` | ✅ Done |
+| Deaf mode: WebSocket Live Status Pill indicator | `frontend/deaf.html` | ✅ Done |
+| Deaf mode: ISL Coverage % Badge (`#coverageBadge`) | `frontend/deaf.html` | ✅ Done |
+| Deaf mode: Board OCR Visual Banner (`#boardBanner`) | `frontend/deaf.html` | ✅ Done |
+| Deaf mode: AI Simplification Bar (`#simplifyBar`) | `frontend/deaf.html` | ✅ Done |
+| Deaf mode: Emotion Overlay (Web Audio prosody glow) | `frontend/deaf.html` | ✅ Done |
+| Deaf mode: Subject Mode toggle (General, Science, Maths, Geography) | `frontend/deaf.html` | ✅ Done |
+| Deaf mode: Bookmark ⭐ button + PDF export highlight | `frontend/deaf.html` | ✅ Done |
+| Deaf mode: Teacher Sign Preview panel | `frontend/deaf.html` | ✅ Done |
+| Landing page: Live animated stats counter + accurate feature badges | `frontend/index.html` | ✅ Done |
 
 ---
 
@@ -39,8 +51,8 @@
 
 ### PHASE 1 — Backend AI Endpoints (2 hrs)
 - [x] **F1.1** `/api/simplify` — Groq Llama 3.3: simplify academic sentences → ISL-friendly SOV
-- [x] **F1.2** `/api/summarise` — Groq Mixtral: full session transcript → 5 revision bullets
-- [x] **F1.3** Upgrade `/api/board-ocr` — Qwen3-VL via Together AI (Gemini stays as fallback)
+- [x] **F1.2** `/api/summarise` — Groq Llama 3.3: full session transcript → 5 revision bullets
+- [x] **F1.3** Upgrade `/api/board-ocr` — Groq Llama 4 Scout Vision (Gemini stays as fallback)
 
 ### PHASE 2 — Quick Frontend Wins (2 hrs, zero backend needed)
 - [x] **F2.1** Braille haptic vibration on commit (blind.html) — `navigator.vibrate()`
